@@ -1,0 +1,73 @@
+package com.github.zomb_676.cargo_hologram.trace
+
+import com.github.zomb_676.cargo_hologram.util.BusSubscribe
+import it.unimi.dsi.fastutil.ints.IntAVLTreeSet
+import net.minecraft.resources.ResourceKey
+import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.level.ChunkPos
+import net.minecraft.world.level.Level
+import net.minecraft.world.level.LevelAccessor
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent
+import net.minecraftforge.event.TickEvent
+import net.minecraftforge.event.TickEvent.LevelTickEvent
+import net.minecraftforge.eventbus.api.IEventBus
+import net.minecraftforge.fml.LogicalSide
+import net.minecraftforge.event.level.LevelEvent as ForgeLevelEvent
+
+/**
+ * result based object, for scan and send to client
+ */
+object MonitorCenter : BusSubscribe {
+
+    private val queryMap: MutableMap<ResourceKey<Level>, MutableMap<ChunkPos, MonitorEntry>> = mutableMapOf()
+
+    override fun registerEvent(modBus: IEventBus, forgeBus: IEventBus) {
+        forgeBus.addListener<ForgeLevelEvent.Unload> { event ->
+            val level: LevelAccessor = event.level
+            if (level is ServerLevel) {
+                val dimKey: ResourceKey<Level> = level.dimension()
+                queryMap[dimKey]!!.forEach { it.value.cleanResult() }
+            }
+        }
+        forgeBus.addListener<ForgeLevelEvent.Load> { event ->
+            val level: LevelAccessor = event.level
+            if (level is ServerLevel) {
+                val dimKey: ResourceKey<Level> = level.dimension()
+                queryMap.computeIfAbsent(dimKey) { _ -> mutableMapOf() }
+            }
+        }
+        forgeBus.addListener<ClientPlayerNetworkEvent.LoggingOut> {
+            queryMap.values.clear()
+        }
+        forgeBus.addListener<LevelTickEvent> { event ->
+            if (event.phase != TickEvent.Phase.END) return@addListener
+            if (event.side != LogicalSide.SERVER) return@addListener
+            val haveTime = event.haveTime() or true
+            val level = event.level as ServerLevel
+            val iter = queryMap[level.dimension()]!!.iterator()
+            val alreadySearched = IntAVLTreeSet()
+            while (iter.hasNext()) {
+                val (pos, entry) = iter.next()
+                if (entry.checkValid()) {
+                    if (level.hasChunk(pos.x, pos.z)) {
+                        if (entry.tick(level.getChunk(pos.x, pos.z), alreadySearched, haveTime)) {
+                            entry.send(level, pos)
+                        }
+                    }
+                } else {
+                    iter.remove()
+                }
+            }
+        }
+    }
+
+    fun monitor(level: Level, chunkPos: ChunkPos, source: QuerySource) {
+        val map = queryMap[level.dimension()]!!
+        val entry = map.computeIfAbsent(chunkPos) { MonitorEntry() }
+        entry.addSource(source)
+    }
+
+    fun stopMonitor(level: ResourceKey<Level>, source: QuerySource) {
+        queryMap[level]!!.forEach { (_, v) -> v.removeSource(source) }
+    }
+}

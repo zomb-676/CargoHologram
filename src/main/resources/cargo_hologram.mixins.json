@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.github.zomb_676.cargo_hologram.mixin",
+  "plugin": "com.github.zomb_676.cargo_hologram.mixin.CargoHologramMixinPlugin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "CargoHologram.refmap.json",
+  "mixins": [
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
