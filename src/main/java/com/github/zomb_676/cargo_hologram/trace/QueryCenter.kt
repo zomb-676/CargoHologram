@@ -1,10 +1,6 @@
 package com.github.zomb_676.cargo_hologram.trace
 
-import com.github.zomb_676.cargo_hologram.util.BusSubscribe
-import com.github.zomb_676.cargo_hologram.util.log
-import com.github.zomb_676.cargo_hologram.util.near
-import com.github.zomb_676.cargo_hologram.util.queryPlayer
-import net.minecraft.core.SectionPos
+import com.github.zomb_676.cargo_hologram.util.*
 import net.minecraft.resources.ResourceKey
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.level.ChunkPos
@@ -12,7 +8,6 @@ import net.minecraft.world.level.Level
 import net.minecraftforge.event.TickEvent
 import net.minecraftforge.event.TickEvent.ServerTickEvent
 import net.minecraftforge.event.entity.player.PlayerEvent
-import net.minecraftforge.eventbus.api.IEventBus
 import java.util.*
 
 /**
@@ -37,8 +32,8 @@ object QueryCenter : BusSubscribe {
                 change = true
             }
             val currentPos = player.blockPosition()
-            val currentX = SectionPos.blockToSectionCoord(currentPos.x)
-            val currentZ = SectionPos.blockToSectionCoord(currentPos.z)
+            val currentX = currentPos.sectionX()
+            val currentZ = currentPos.sectionZ()
             if (currentX != lastChunkPos.x || currentZ != lastChunkPos.z) {
                 lastChunkPos = ChunkPos(currentX, currentZ)
                 change = true
@@ -53,36 +48,41 @@ object QueryCenter : BusSubscribe {
             is QuerySource.PlayerQuerySource -> {
                 playerSources.put(source.player, source)?.invalidate()
                 playerTrace[source.player] = LastPlayerLocation(source.player.queryPlayer()!!)
-                //TODO
+                monitorForPlayer(source.player.queryPlayer()!!, source)
             }
         }
     }
 
     fun stopPlayer(playerUuid: UUID) {
         playerSources.remove(playerUuid)!!.invalidate()
+        playerTrace.remove(playerUuid)
     }
 
-    override fun registerEvent(modBus: IEventBus, forgeBus: IEventBus) {
-        forgeBus.addListener<ServerTickEvent> { event ->
-            if (event.phase != TickEvent.Phase.END) return@addListener
+    override fun registerEvent(dispatcher: Dispatcher) {
+        dispatcher<ServerTickEvent> { event ->
+            if (event.phase != TickEvent.Phase.END) return@dispatcher
             playerSources.forEach { (playerUuid, source) ->
                 val player = playerUuid.queryPlayer() ?: return@forEach
                 if (playerTrace[playerUuid]!!.update(player)) {
-                    log { debug("update monitor for player:{}", player) }
-                    val level = player.level()
-                    ChunkPos(player.blockPosition()).near(source.radius) { chunkPos ->
-                        MonitorCenter.monitor(level, chunkPos, source)
-                    }
+                    monitorForPlayer(player, source)
                 }
             }
         }
-        forgeBus.addListener<PlayerEvent.PlayerLoggedOutEvent> { event ->
+        dispatcher<PlayerEvent.PlayerLoggedOutEvent> { event ->
             val playerUuid = event.entity.uuid
             playerSources.remove(playerUuid)
             playerTrace.remove(playerUuid)
         }
     }
 
-
+    private fun monitorForPlayer(
+        player: ServerPlayer,
+        source: QuerySource.PlayerQuerySource,
+    ) {
+        val level = player.level()
+        ChunkPos(player.blockPosition()).near(source.radius) { chunkPos ->
+            MonitorCenter.monitor(level, chunkPos, source)
+        }
+    }
 
 }

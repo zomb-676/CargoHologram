@@ -1,12 +1,8 @@
 package com.github.zomb_676.cargo_hologram
 
 import com.github.zomb_676.cargo_hologram.selector.Selector
-import com.github.zomb_676.cargo_hologram.util.BusSubscribe
-import com.github.zomb_676.cargo_hologram.util.GlobalFilter
-import com.github.zomb_676.cargo_hologram.util.ListMode
-import com.github.zomb_676.cargo_hologram.util.isOnDev
+import com.github.zomb_676.cargo_hologram.util.*
 import net.minecraftforge.common.ForgeConfigSpec
-import net.minecraftforge.eventbus.api.IEventBus
 import net.minecraftforge.fml.ModLoadingContext
 import net.minecraftforge.fml.config.ModConfig
 import net.minecraftforge.fml.event.config.ModConfigEvent
@@ -63,9 +59,9 @@ data object Config : BusSubscribe {
 
         private val SPEC: ForgeConfigSpec = BUILDER.build()
 
-        override fun registerEvent(modBus: IEventBus, forgeBus: IEventBus) {
+        override fun registerEvent(dispatcher: Dispatcher) {
             ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, SPEC)
-            modBus.addListener(::onLoad)
+            dispatcher<_>(::onLoad)
         }
 
         var enableDebug: Boolean = isOnDev()
@@ -105,9 +101,9 @@ data object Config : BusSubscribe {
 
         private val SPEC: ForgeConfigSpec = BUILDER.build()
 
-        override fun registerEvent(modBus: IEventBus, forgeBus: IEventBus) {
+        override fun registerEvent(dispatcher: Dispatcher) {
             ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, SPEC)
-            modBus.addListener(::onLoad)
+            dispatcher<_>(::onLoad)
         }
 
         private fun onLoad(@Suppress("UNUSED_PARAMETER") event: ModConfigEvent) {
@@ -115,9 +111,7 @@ data object Config : BusSubscribe {
         }
     }
 
-    override fun registerEvent(modBus: IEventBus, forgeBus: IEventBus) {
-        listOf(Server, Client).forEach { subscriber ->
-            subscriber.registerEvent(modBus, forgeBus)
-        }
+    override fun registerEvent(dispatcher: Dispatcher) {
+        arrayOf(Server, Client).dispatch()
     }
 }

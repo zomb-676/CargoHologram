@@ -97,5 +97,8 @@ value class CommandDSL<S>(
         inline val redirect get() = node.redirect
         inline val redirectModifier get() = node.redirectModifier
         inline val isFork get() = node.isFork
+
+        inline fun <reified T> CommandContext<*>.getArgument(name: String): T =
+            this.getArgument(name, T::class.java)
     }
 }

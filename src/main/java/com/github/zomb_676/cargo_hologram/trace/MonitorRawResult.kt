@@ -2,6 +2,7 @@ package com.github.zomb_676.cargo_hologram.trace
 
 import com.github.zomb_676.cargo_hologram.network.WrappedResult
 import com.github.zomb_676.cargo_hologram.util.MultiBlockContainerHandle
+import com.github.zomb_676.cargo_hologram.util.SlotItemStack
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet
 import net.minecraft.core.BlockPos
 import net.minecraft.network.FriendlyByteBuf
@@ -13,22 +14,7 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities
 import java.util.function.IntPredicate
 
 class MonitorRawResult(val data: Map<BlockPos, List<SlotItemStack>>) :
-    Iterable<Map.Entry<BlockPos, List<MonitorRawResult.SlotItemStack>>> {
-
-    data class SlotItemStack(val slot: Int, val itemStack: ItemStack) {
-        fun encode(buffer: FriendlyByteBuf) {
-            buffer.writeInt(slot)
-            buffer.writeItemStack(itemStack, false)
-        }
-
-        companion object {
-            fun decode(buffer: FriendlyByteBuf): SlotItemStack {
-                val slot = buffer.readInt()
-                val itemStack = buffer.readItem()
-                return SlotItemStack(slot, itemStack)
-            }
-        }
-    }
+    Iterable<Map.Entry<BlockPos, List<SlotItemStack>>> {
 
     class QueryRawResultBuilder {
         private val data: MutableMap<BlockPos, MutableList<SlotItemStack>> = mutableMapOf()

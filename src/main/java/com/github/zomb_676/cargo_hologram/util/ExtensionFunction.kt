@@ -2,8 +2,12 @@ package com.github.zomb_676.cargo_hologram.util
 
 import com.github.zomb_676.cargo_hologram.CargoHologram
 import com.github.zomb_676.cargo_hologram.Config
+import com.github.zomb_676.cargo_hologram.util.cursor.Cursor
 import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.components.AbstractWidget
 import net.minecraft.client.gui.screens.Screen
+import net.minecraft.core.BlockPos
+import net.minecraft.core.SectionPos
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.chat.Component
 import net.minecraft.network.chat.MutableComponent
@@ -15,6 +19,8 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.ItemLike
 import net.minecraft.world.level.Level
+import net.minecraftforge.api.distmarker.Dist
+import net.minecraftforge.fml.DistExecutor
 import net.minecraftforge.fml.loading.FMLEnvironment
 import net.minecraftforge.network.NetworkDirection
 import net.minecraftforge.server.ServerLifecycleHooks
@@ -32,6 +38,7 @@ fun currentClientPlayer() = currentMinecraft().player!!
 
 fun ResourceLocation.dimKey(): ResourceKey<Level> = ResourceKey.create(Registries.DIMENSION, this)
 fun ResourceLocation.dim(): ServerLevel = currentServer().getLevel(this.dimKey())!!
+fun ResourceKey<Level>.dim() = currentServer().getLevel(this)!!
 
 fun allLevel(): MutableIterable<ServerLevel> = currentServer().allLevels
 
@@ -151,3 +158,18 @@ fun MutableList<Component>.append(component: Component): MutableList<Component> 
     this.add(component)
     return this
 }
+
+fun Array<out BusSubscribe>.dispatch() = this.forEach { s -> s.registerEvent(Dispatcher) }
+
+inline fun runOnDistClient(crossinline f: () -> () -> Unit) {
+    DistExecutor.safeRunWhenOn(Dist.CLIENT) { DistExecutor.SafeRunnable { f()() } }
+}
+
+fun AbstractWidget.assign(cursor: Cursor<*>) {
+    cursor.setWidget(this)
+}
+
+fun BlockPos.sectionX() = SectionPos.blockToSectionCoord(this.x)
+fun BlockPos.sectionY() = SectionPos.blockToSectionCoord(this.y)
+fun BlockPos.sectionZ() = SectionPos.blockToSectionCoord(this.z)
+fun BlockPos.toChunkPos() = ChunkPos(this)

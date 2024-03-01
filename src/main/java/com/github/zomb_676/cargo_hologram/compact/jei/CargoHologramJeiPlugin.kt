@@ -6,6 +6,7 @@ import com.github.zomb_676.cargo_hologram.ui.CraftMenu
 import com.github.zomb_676.cargo_hologram.ui.CraftScreen
 import com.github.zomb_676.cargo_hologram.ui.MonitorScreen
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
+import com.github.zomb_676.cargo_hologram.util.log
 import com.github.zomb_676.cargo_hologram.util.optional
 import mezz.jei.api.IModPlugin
 import mezz.jei.api.JeiPlugin
@@ -13,17 +14,21 @@ import mezz.jei.api.constants.RecipeTypes
 import mezz.jei.api.gui.handlers.IGhostIngredientHandler
 import mezz.jei.api.gui.handlers.IGuiContainerHandler
 import mezz.jei.api.gui.handlers.IGuiProperties
+import mezz.jei.api.gui.ingredient.IRecipeSlotView
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView
 import mezz.jei.api.ingredients.ITypedIngredient
+import mezz.jei.api.recipe.RecipeIngredientRole
 import mezz.jei.api.recipe.RecipeType
 import mezz.jei.api.recipe.transfer.IRecipeTransferError
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandler
 import mezz.jei.api.registration.IGuiHandlerRegistration
 import mezz.jei.api.registration.IRecipeTransferRegistration
 import net.minecraft.client.gui.screens.Screen
+import net.minecraft.client.renderer.Rect2i
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.inventory.MenuType
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.crafting.CraftingRecipe
 import java.util.*
 
@@ -46,6 +51,11 @@ class CargoHologramJeiPlugin : IModPlugin {
                 maxTransfer: Boolean,
                 doTransfer: Boolean,
             ): IRecipeTransferError? {
+                if (doTransfer) {
+                    val output: IRecipeSlotView = recipeSlots.getSlotViews(RecipeIngredientRole.OUTPUT).first()
+                    val inputs: MutableList<IRecipeSlotView> = recipeSlots.getSlotViews(RecipeIngredientRole.INPUT)
+
+                }
                 return null
             }
 
@@ -56,21 +66,35 @@ class CargoHologramJeiPlugin : IModPlugin {
         registration.addGuiScreenHandler(MonitorScreen::class.java) { screen ->
             screen.mainArea.asIGuiProperties(screen)
         }
+        registration.addGuiScreenHandler(CraftScreen::class.java) { screen ->
+            screen.mainArea.asIGuiProperties(screen)
+        }
         registration.addGhostIngredientHandler(
-            MonitorScreen::class.java,
-            object : IGhostIngredientHandler<MonitorScreen> {
+            CraftScreen::class.java,
+            object : IGhostIngredientHandler<CraftScreen> {
                 override fun <I : Any?> getTargetsTyped(
-                    gui: MonitorScreen,
+                    gui: CraftScreen,
                     ingredient: ITypedIngredient<I>,
                     doStart: Boolean,
-                ): List<IGhostIngredientHandler.Target<I>> {
-                    return listOf()
-                }
+                ): List<IGhostIngredientHandler.Target<I>> =
+                    gui.craftMaterialSlotsArea().map { area ->
+                        object : IGhostIngredientHandler.Target<I> {
+                            override fun accept(ingredient: I) {
+                                if (ingredient is ItemStack) {
+                                    gui.set(area, ingredient)
+                                }
+                            }
+
+                            override fun getArea(): Rect2i = area.asRect2i()
+                        }
+                    }
+
 
                 override fun onComplete() {
 
                 }
 
+                override fun shouldHighlightTargets(): Boolean = true
             })
         registration.addGuiContainerHandler(CraftScreen::class.java, object : IGuiContainerHandler<CraftScreen> {
 

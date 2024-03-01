@@ -7,6 +7,7 @@ import com.github.zomb_676.cargo_hologram.item.CraftPanel
 import com.github.zomb_676.cargo_hologram.item.MonitorGlasses
 import com.github.zomb_676.cargo_hologram.ui.CraftMenu
 import com.github.zomb_676.cargo_hologram.util.BusSubscribe
+import com.github.zomb_676.cargo_hologram.util.Dispatcher
 import com.github.zomb_676.cargo_hologram.util.MinecraftItems
 import net.minecraft.core.registries.Registries
 import net.minecraft.world.flag.FeatureFlags
@@ -28,10 +29,10 @@ object AllRegisters : BusSubscribe {
     private val MENU: DeferredRegister<MenuType<*>> = DeferredRegister.create(ForgeRegistries.MENU_TYPES, MOD_ID)
     private val TAB: DeferredRegister<CreativeModeTab> = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MOD_ID)
 
-    override fun registerEvent(modBus: IEventBus, forgeBus: IEventBus) {
-        arrayOf(ITEM, BLOCK, MENU, TAB).forEach { reg -> reg.register(modBus) }
-        modBus.addListener<BuildCreativeModeTabContentsEvent> { event ->
-            if (event.tab != CREATIVE_TAB.get()) return@addListener
+    override fun registerEvent(dispatcher: Dispatcher) {
+        arrayOf(ITEM, BLOCK, MENU, TAB).forEach(dispatcher::registerDeferred)
+        dispatcher<BuildCreativeModeTabContentsEvent> { event ->
+            if (event.tab != CREATIVE_TAB.get()) return@dispatcher
             sequenceOf(Items.monitor, Items.crafter, Items.filter, Items.glasses)
                 .map(RegistryObject<out Item>::get)
                 .forEach(event::accept)

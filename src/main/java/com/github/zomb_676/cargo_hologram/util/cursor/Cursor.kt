@@ -3,6 +3,7 @@ package com.github.zomb_676.cargo_hologram.util.cursor
 import com.github.zomb_676.cargo_hologram.util.cursor.NoRemainSpaceException.Companion.noHeight
 import com.github.zomb_676.cargo_hologram.util.cursor.NoRemainSpaceException.Companion.noWidth
 import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.components.AbstractWidget
 import java.util.*
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
@@ -164,4 +165,14 @@ class Cursor<T : Cursor<T>>(
 
     override fun toString(): String = "Cursor(left=$left, up=$up, right=$right, down=$down, layers:${layerSize})"
 
+    fun setWidget(widget: AbstractWidget) {
+        widget.x = x1
+        widget.y = y1
+        widget.width = width
+        widget.height = height
+    }
+
+    inline fun draw(guiGraphics: GuiGraphics, f: (GraphicCursor<*>) -> Unit) {
+        f(this.forDraw(guiGraphics))
+    }
 }

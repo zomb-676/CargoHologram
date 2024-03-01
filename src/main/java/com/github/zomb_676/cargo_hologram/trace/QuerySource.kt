@@ -1,6 +1,5 @@
 package com.github.zomb_676.cargo_hologram.trace
 
-import com.github.zomb_676.cargo_hologram.network.WrappedResult
 import com.github.zomb_676.cargo_hologram.util.currentServer
 import com.github.zomb_676.cargo_hologram.util.isOnline
 import com.github.zomb_676.cargo_hologram.util.queryPlayer
@@ -21,7 +20,9 @@ import java.util.function.IntPredicate
  */
 sealed class QuerySource {
 
-    val attachedChunk: Map<ResourceKey<Level>, MutableList<ChunkPos>> = ALL_LEVELS.associateWith { mutableListOf() }
+    private val attachedChunk: Map<ResourceKey<Level>, MutableList<ChunkPos>> = ALL_LEVELS.associateWith { mutableListOf() }
+
+    fun attachedChunks(): Map<ResourceKey<Level>, List<ChunkPos>> = attachedChunk
 
     /**
      * @param level the level of the data, not the source's level

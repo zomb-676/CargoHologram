@@ -1,5 +1,6 @@
 package com.github.zomb_676.cargo_hologram.util.cursor
 
+import com.github.zomb_676.cargo_hologram.ui.UIConstant
 import com.github.zomb_676.cargo_hologram.util.ARGBColor
 import com.github.zomb_676.cargo_hologram.util.MoveData
 import com.github.zomb_676.cargo_hologram.util.asItemStack
@@ -18,12 +19,13 @@ class GraphicCursor<T : Cursor<T>>(private val cursor: Cursor<T>, private val gu
     private val moveData = MoveData(0, 0)
     private var lineSpan: Int = 2
     private var autoMove: Boolean = true
-    private var itemSpan = 16
 
     companion object {
-        private val font = Minecraft.getInstance().font
-        private val fontHeight = font.lineHeight
-        private val halfFontHeight = fontHeight / 2
+        private val FONT = Minecraft.getInstance().font
+        private val FONT_HEIGHT = FONT.lineHeight
+        private val HALF_FONT_HEIGHT = FONT_HEIGHT / 2
+        private const val ADDITION_ITEM_PADDING = 1
+        private var ITEM_SPAN = UIConstant.ITEM_SIZE
     }
 
     override fun isolate(): T = cursor.isolate()
@@ -36,6 +38,13 @@ class GraphicCursor<T : Cursor<T>>(private val cursor: Cursor<T>, private val gu
         return this
     }
 
+    fun fill(sizeX: Int, sizeY: Int = sizeX, color: ARGBColor = ARGBColor.Presets.GREY): GraphicCursor<T> {
+        val baseX = cursor.x1 + modifyX
+        val baseY = cursor.y1 + modifyY
+        guiGraphics.fill(baseX, baseY, baseX + sizeX, baseY + sizeY, color.color)
+        return this
+    }
+
     fun outline(color: ARGBColor): GraphicCursor<T> {
         guiGraphics.renderOutline(
             cursor.x1 + modifyX, cursor.y1 + modifyY, cursor.width - modifyX, cursor.height - modifyY, color.color
@@ -45,7 +54,7 @@ class GraphicCursor<T : Cursor<T>>(private val cursor: Cursor<T>, private val gu
 
     fun centeredString(str: String, color: ARGBColor = ARGBColor.Presets.WHITE): GraphicCursor<T> {
         guiGraphics.drawCenteredString(
-            font, str, (x1 + modifyX + x2) / 2, ((y1 + modifyY + y2) / 2) - halfFontHeight, color.color
+            FONT, str, (x1 + modifyX + x2) / 2, ((y1 + modifyY + y2) / 2) - HALF_FONT_HEIGHT, color.color
         )
         return this
     }
@@ -55,14 +64,14 @@ class GraphicCursor<T : Cursor<T>>(private val cursor: Cursor<T>, private val gu
      */
     fun string(str: String, color: ARGBColor = ARGBColor.Presets.WHITE): GraphicCursor<T> {
         val i = x1 + modifyX
-        val width = guiGraphics.drawString(font, str, i, y1 + modifyY, color.color) - i
-        moveData.appendX(width).spanY(fontHeight)
+        val width = guiGraphics.drawString(FONT, str, i, y1 + modifyY, color.color) - i
+        onAutoMove { moveData.appendX(width).spanY(FONT_HEIGHT) }
         return this
     }
 
     fun string(str: Component, color: ARGBColor = ARGBColor.Presets.WHITE): GraphicCursor<T> {
-        val width = guiGraphics.drawString(font, str, x1 + modifyX, y1 + modifyY, color.color)
-        moveData.appendX(width).spanY(fontHeight)
+        val width = guiGraphics.drawString(FONT, str, x1 + modifyX, y1 + modifyY, color.color)
+        onAutoMove { moveData.appendX(width).spanY(FONT_HEIGHT) }
         return this
     }
 
@@ -70,7 +79,7 @@ class GraphicCursor<T : Cursor<T>>(private val cursor: Cursor<T>, private val gu
 
     fun item(item: ItemStack): GraphicCursor<T> {
         guiGraphics.renderItem(item, x1 + modifyX, y1 + modifyY)
-        moveData.appendX(itemSpan).spanY(itemSpan)
+        onAutoMove { moveData.appendX(ITEM_SPAN).spanY(ITEM_SPAN) }
         return this
     }
 
@@ -78,16 +87,21 @@ class GraphicCursor<T : Cursor<T>>(private val cursor: Cursor<T>, private val gu
         val xPos = x1 + modifyX
         val yPos = y1 + modifyY
         guiGraphics.renderItem(item, xPos, yPos)
-        guiGraphics.renderItemDecorations(font, item, xPos, yPos)
-        moveData.appendX(itemSpan).spanY(itemSpan)
+        guiGraphics.renderItemDecorations(FONT, item, xPos, yPos)
+        onAutoMove { moveData.appendX(ITEM_SPAN).spanY(ITEM_SPAN) }
         return this
     }
 
     fun inItemRange(posX: Int, posY: Int) =
-        posX > x1 + modifyX && posX < x1 + modifyX + itemSpan
-                && posY > y1 + modifyY && posY < y1 + modifyY + itemSpan
+        posX >= x1 + modifyX - ADDITION_ITEM_PADDING && posX <= x1 + modifyX + ITEM_SPAN + ADDITION_ITEM_PADDING
+                && posY >= y1 + modifyY - ADDITION_ITEM_PADDING && posY <= y1 + modifyY + ITEM_SPAN + ADDITION_ITEM_PADDING
 
-    fun itemArea() = AreaImmute.ofRelative(x1 + modifyX, y1 + modifyY, itemSpan, itemSpan)
+    fun itemArea() = AreaImmute.ofRelative(
+        x1 + modifyX - ADDITION_ITEM_PADDING,
+        y1 + modifyY - ADDITION_ITEM_PADDING,
+        ITEM_SPAN + (ADDITION_ITEM_PADDING * 2),
+        ITEM_SPAN + (ADDITION_ITEM_PADDING * 2)
+    )
 
     fun underLine(color: ARGBColor = ARGBColor.Presets.WHITE): GraphicCursor<T> {
         guiGraphics.hLine(x1 + moveData.anchorX, x1 + modifyX, y1 + modifyY + moveData.spanY, color.color)
@@ -95,21 +109,21 @@ class GraphicCursor<T : Cursor<T>>(private val cursor: Cursor<T>, private val gu
     }
 
     fun tooltipForItem(x: Int, y: Int, item: ItemStack): GraphicCursor<T> {
-        guiGraphics.renderTooltip(font, item, x, y)
+        guiGraphics.renderTooltip(FONT, item, x, y)
         return this
     }
 
     fun tooltipComponent(posX: Int, posY: Int, text: Component): GraphicCursor<T> {
-        guiGraphics.renderTooltip(font, text, posX, posY)
+        guiGraphics.renderTooltip(FONT, text, posX, posY)
         return this
     }
 
     fun tooltipComponent(posX: Int, posY: Int, text: List<Component>) {
-        guiGraphics.renderTooltip(font, text, Optional.empty(), posX, posY)
+        guiGraphics.renderTooltip(FONT, text, Optional.empty(), posX, posY)
     }
 
     fun tooltipComponent(posX: Int, posY: Int, text: List<Component>, custom: TooltipComponent) {
-        guiGraphics.renderTooltip(font, text, custom.optional(), posX, posY)
+        guiGraphics.renderTooltip(FONT, text, custom.optional(), posX, posY)
     }
 
 
@@ -149,5 +163,16 @@ class GraphicCursor<T : Cursor<T>>(private val cursor: Cursor<T>, private val gu
         return this
     }
 
+    fun haveSpace(addX: Int = 0, addY: Int = 0) =
+        this.containsPointIncludingEdge(x1 + modifyX + addX, y1 + modifyY + addY)
+
+    fun subArea(width: Int, height: Int = width): AreaImmute =
+        AreaImmute.ofRelative(x1 + modifyX, y1 + modifyY, width, height)
+
+    private inline fun onAutoMove(codeBlock: () -> Unit) {
+        if (this.autoMove) {
+            codeBlock()
+        }
+    }
 
 }

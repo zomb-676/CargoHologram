@@ -23,6 +23,14 @@ object MultiBlockContainerHandle {
         }
     }
 
+    /**
+     * multi-block containers may have multi blocks which support IO
+     * distinguish between iter all items contained by the whole structure and
+     * iter items only contained by the block we query is hard
+     *
+     * for [ChestBlockEntity.itemHandler] is hash diff for two connected chest block
+     * for [org.cyclops.colossalchests] their multi-block share same
+     */
     fun handle(alreadySearched: IntAVLTreeSet, itemHandle: IItemHandler, identityHash: Int, blockEntity: BlockEntity) {
         if (blockEntity is ChestBlockEntity) {
             val blockState = blockEntity.blockState

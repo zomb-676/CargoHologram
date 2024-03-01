@@ -1,6 +1,7 @@
 package com.github.zomb_676.cargo_hologram.util
 
 import net.minecraft.world.item.DyeColor
+import org.jetbrains.annotations.Range
 
 @JvmInline
 value class ARGBColor private constructor(val color: Int) {
@@ -21,22 +22,22 @@ value class ARGBColor private constructor(val color: Int) {
     }
 
     object Vanilla {
-        val WHITE = ARGBColor(DyeColor.WHITE.textColor)
-        val ORANGE = ARGBColor(DyeColor.ORANGE.textColor)
-        val MAGENTA = ARGBColor(DyeColor.MAGENTA.textColor)
-        val LIGHT_BLUE = ARGBColor(DyeColor.LIGHT_BLUE.textColor)
-        val YELLOW = ARGBColor(DyeColor.YELLOW.textColor)
-        val LIME = ARGBColor(DyeColor.LIME.textColor)
-        val PINK = ARGBColor(DyeColor.PINK.textColor)
-        val GRAY = ARGBColor(DyeColor.GRAY.textColor)
-        val LIGHT_GRAY = ARGBColor(DyeColor.LIGHT_GRAY.textColor)
-        val CYAN = ARGBColor(DyeColor.CYAN.textColor)
-        val PURPLE = ARGBColor(DyeColor.PURPLE.textColor)
-        val BLUE = ARGBColor(DyeColor.BLUE.textColor)
-        val BROWN = ARGBColor(DyeColor.BROWN.textColor)
-        val GREEN = ARGBColor(DyeColor.GREEN.textColor)
-        val RED = ARGBColor(DyeColor.RED.textColor)
-        val BLACK = ARGBColor(DyeColor.BLACK.textColor)
+        val WHITE = ARGBColor(DyeColor.WHITE.textColor).fullAlpha()
+        val ORANGE = ARGBColor(DyeColor.ORANGE.textColor).fullAlpha()
+        val MAGENTA = ARGBColor(DyeColor.MAGENTA.textColor).fullAlpha()
+        val LIGHT_BLUE = ARGBColor(DyeColor.LIGHT_BLUE.textColor).fullAlpha()
+        val YELLOW = ARGBColor(DyeColor.YELLOW.textColor).fullAlpha()
+        val LIME = ARGBColor(DyeColor.LIME.textColor).fullAlpha()
+        val PINK = ARGBColor(DyeColor.PINK.textColor).fullAlpha()
+        val GRAY = ARGBColor(DyeColor.GRAY.textColor).fullAlpha()
+        val LIGHT_GRAY = ARGBColor(DyeColor.LIGHT_GRAY.textColor).fullAlpha()
+        val CYAN = ARGBColor(DyeColor.CYAN.textColor).fullAlpha()
+        val PURPLE = ARGBColor(DyeColor.PURPLE.textColor).fullAlpha()
+        val BLUE = ARGBColor(DyeColor.BLUE.textColor).fullAlpha()
+        val BROWN = ARGBColor(DyeColor.BROWN.textColor).fullAlpha()
+        val GREEN = ARGBColor(DyeColor.GREEN.textColor).fullAlpha()
+        val RED = ARGBColor(DyeColor.RED.textColor).fullAlpha()
+        val BLACK = ARGBColor(DyeColor.BLACK.textColor).fullAlpha()
     }
 
     object Presets {

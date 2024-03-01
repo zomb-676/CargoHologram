@@ -1,7 +1,6 @@
 package com.github.zomb_676.cargo_hologram.network
 
 import com.github.zomb_676.cargo_hologram.CargoHologram
-import com.github.zomb_676.cargo_hologram.trace.MonitorRawResult
 import com.github.zomb_676.cargo_hologram.util.optional
 import net.minecraft.network.Connection
 import net.minecraft.network.FriendlyByteBuf
@@ -67,5 +66,7 @@ object NetworkHandle {
         register(PlayerCenteredQueryRequestPack::decode, NetworkDirection.PLAY_TO_SERVER)
         register(PlayerCenteredQueryStopPack::decode, NetworkDirection.PLAY_TO_SERVER)
         register(WrappedResult::decode, NetworkDirection.PLAY_TO_CLIENT)
+        register(RequestRemoteTake::decode, NetworkDirection.PLAY_TO_SERVER)
+        register(ResponsePack::decode, NetworkDirection.PLAY_TO_CLIENT)
     }
 }
