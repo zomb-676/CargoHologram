@@ -31,6 +31,8 @@ java {
     toolchain.languageVersion = JavaLanguageVersion.of(17)
 }
 
+jarJar.enable()
+
 minecraft {
     mappings channel: 'parchment', version: '2023.09.03-1.20.1'
 
@@ -162,7 +164,11 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 
     annotationProcessor('org.spongepowered:mixin:0.8.5:processor')
-    minecraftLibrary("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version") {
+    minecraftLibrary("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version") {
+        exclude group: 'org.jetbrains', module: 'annotations'
+    }
+
+    jarJar("org.jetbrains.kotlin:kotlin-stdlib:[$kotlin_version,2.0)") {
         exclude group: 'org.jetbrains', module: 'annotations'
     }
 
@@ -172,7 +178,7 @@ dependencies {
     compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"))
     runtimeOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}"))
 
-    runtimeOnly(fg.deobf("curse.maven:colossal-chests-237875:4620461"))
+    runtimeOnly(fg.deobf("curse.maven:n-237875:4620461"))
     runtimeOnly(fg.deobf("curse.maven:cyclops-core-232758:5080553"))
 }
 
