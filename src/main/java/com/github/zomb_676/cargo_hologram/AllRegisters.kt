@@ -9,6 +9,7 @@ import com.github.zomb_676.cargo_hologram.ui.CraftMenu
 import com.github.zomb_676.cargo_hologram.util.BusSubscribe
 import com.github.zomb_676.cargo_hologram.util.Dispatcher
 import com.github.zomb_676.cargo_hologram.util.MinecraftItems
+import com.github.zomb_676.cargo_hologram.util.literal
 import net.minecraft.core.registries.Registries
 import net.minecraft.world.flag.FeatureFlags
 import net.minecraft.world.inventory.MenuType
@@ -17,7 +18,6 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.Block
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent
-import net.minecraftforge.eventbus.api.IEventBus
 import net.minecraftforge.registries.DeferredRegister
 import net.minecraftforge.registries.ForgeRegistries
 import net.minecraftforge.registries.RegistryObject
@@ -43,6 +43,7 @@ object AllRegisters : BusSubscribe {
 
     val CREATIVE_TAB = TAB.register("cargo") {
         CreativeModeTab.builder()
+            .title(CargoHologram.MOD_NAME.literal())
             .icon { ItemStack(MinecraftItems.DIAMOND) }
             .build()
     }

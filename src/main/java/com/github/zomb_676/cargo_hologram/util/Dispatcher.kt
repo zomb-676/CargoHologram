@@ -1,7 +1,8 @@
 package com.github.zomb_676.cargo_hologram.util
 
-import com.github.zomb_676.cargo_hologram.CargoHologram
+import com.github.zomb_676.cargo_hologram.Config
 import com.github.zomb_676.cargo_hologram.ui.CommandDSL
+import com.google.errorprone.annotations.CanIgnoreReturnValue
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.world.inventory.tooltip.TooltipComponent
@@ -40,6 +41,9 @@ object Dispatcher {
         switchEvent<T>().addGenericListener(
             V::class.java, priority, receiveCanceled, T::class.java
         ) { e -> codeBlock(e) }
+        warp(codeBlock,
+            { s -> switchEvent<T>().addGenericListener(V::class.java, priority, receiveCanceled, T::class.java, s) },
+            { "error while run on Event:${T::class.java.simpleName} Generic:${V::class.java.simpleName}" })
     }
 
     @JvmName("registerForNoneGenericEvent")
@@ -54,14 +58,25 @@ object Dispatcher {
         crossinline codeBlock: (T) -> Unit,
     ) {
         Asserts.check(!T::class.java.isGenericEvent(), "${T::class.java.simpleName} is GenericEvent<T>")
-        switchEvent<T>().addListener(priority, receiveCanceled, T::class.java) { e ->
-            try {
-                codeBlock.invoke(e)
-            } catch (e : Exception) {
-                CargoHologram.LOGGER.error("error while run event")
-                throw e
+        warp(codeBlock,
+            { s -> switchEvent<T>().addListener(priority, receiveCanceled, T::class.java, s) },
+            { "error while run on Event:${T::class.java.simpleName}" })
+    }
+
+    inline fun <T> warp(
+        crossinline codeBlock: (T) -> Unit,
+        crossinline warp: ((T) -> Unit) -> Unit,
+        crossinline onError: (Exception) -> String,
+    ) {
+        if (Config.Server.enableDebug) {
+            warp { s: T ->
+                try {
+                    codeBlock(s)
+                } catch (e: Exception) {
+                    log { error(onError(e), e) }
+                }
             }
-        }
+        } else warp { codeBlock(it) }
     }
 
     fun <T : DeferredRegister<*>> registerDeferred(register: T) {
@@ -91,6 +106,7 @@ object Dispatcher {
     }
 
     @JvmName("enqueueWithVoid")
+    @CanIgnoreReturnValue
     inline fun <reified T : ParallelDispatchEvent> enqueueWork(
         priority: EventPriority = EventPriority.NORMAL,
         noinline code: () -> Unit,
@@ -103,6 +119,7 @@ object Dispatcher {
     }
 
     @JvmName("enqueueNoneVoid")
+    @CanIgnoreReturnValue
     inline fun <reified T : ParallelDispatchEvent, R> enqueueWork(
         priority: EventPriority = EventPriority.NORMAL,
         noinline code: () -> R,

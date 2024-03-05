@@ -52,6 +52,13 @@ class GraphicCursor<T : Cursor<T>>(private val cursor: Cursor<T>, private val gu
         return this
     }
 
+    fun outline(width: Int, height: Int = width, color: ARGBColor): GraphicCursor<T> {
+        guiGraphics.renderOutline(
+            cursor.x1 + modifyX, cursor.y1 + modifyY, width, height, color.color
+        )
+        return this
+    }
+
     fun centeredString(str: String, color: ARGBColor = ARGBColor.Presets.WHITE): GraphicCursor<T> {
         guiGraphics.drawCenteredString(
             FONT, str, (x1 + modifyX + x2) / 2, ((y1 + modifyY + y2) / 2) - HALF_FONT_HEIGHT, color.color

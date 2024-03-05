@@ -1,6 +1,9 @@
 package com.github.zomb_676.cargo_hologram.network
 
 import com.github.zomb_676.cargo_hologram.CargoHologram
+import com.github.zomb_676.cargo_hologram.SetSlotPacket
+import com.github.zomb_676.cargo_hologram.util.log
+import com.github.zomb_676.cargo_hologram.util.onDev
 import com.github.zomb_676.cargo_hologram.util.optional
 import net.minecraft.network.Connection
 import net.minecraft.network.FriendlyByteBuf
@@ -35,15 +38,47 @@ object NetworkHandle {
     }
 
     /**
-     * further warp, with direction assert if specified, and [NetworkEvent.Context.packetHandled] set
+     * further warp
+     *
+     * [FriendlyByteBuf]'s first byte is used to store [MessageEntry.index]
+     *
+     * * direction assert if specified
+     * * [NetworkEvent.Context.packetHandled] set true
+     * * [FriendlyByteBuf.writerIndex] and [FriendlyByteBuf.readerIndex] check
+     * at [MessageEntry.decode] and [MessageEntry.encode]
      */
     private inline fun <reified T : NetworkPack<T>> register(
         crossinline decodeFunction: (FriendlyByteBuf) -> T,
         direction: NetworkDirection? = null,
     ) {
         register(object : MessageEntry<T>(T::class.java) {
-            override fun encode(instance: T, buf: FriendlyByteBuf) = instance.encode(buf)
-            override fun decode(buf: FriendlyByteBuf): T = decodeFunction.invoke(buf)
+            override fun encode(instance: T, buf: FriendlyByteBuf) {
+                instance.encode(buf)
+                if (buf.readerIndex() != 0) {
+                    //don't read while encoding
+                    val message = "read must be zero after encode in ${T::class.java.simpleName}"
+                    log { error(message) }
+                    onDev { throw RuntimeException(message) }
+                }
+            }
+
+            override fun decode(buf: FriendlyByteBuf): T {
+                if (buf.readerIndex() != 1) {
+                    val message = "readerIndex must be 1 before decode in ${T::class.java.simpleName}"
+                    log { error(message) }
+                    onDev { throw RuntimeException(message) }
+                }
+                val res = decodeFunction.invoke(buf)
+                if (buf.writerIndex() != buf.readerIndex()) {
+                    //not fully read, in most case decode result is wrong
+                    //don't write while decoding
+                    val message = "writerIndex must equal to readerIndex after decode in ${T::class.java.simpleName}"
+                    log { error(message) }
+                    onDev { throw RuntimeException(message) }
+                }
+                return res
+            }
+
             override fun handle(instance: T, context: Supplier<NetworkEvent.Context>) {
                 @Suppress("NAME_SHADOWING") val context = context.get()
                 if (direction != null) {
@@ -51,7 +86,13 @@ object NetworkHandle {
                         context.direction == direction, "register direction:$direction, actual:${context.direction}"
                     )
                 }
-                instance.handle(context)
+                try {
+                    instance.handle(context)
+                } catch (e: Exception) {
+                    val message = "error while handle packet for ${T::class.simpleName}"
+                    log { error(message, e) }
+                    onDev { throw RuntimeException(message, e) }
+                }
                 context.packetHandled = true
             }
 
@@ -68,5 +109,7 @@ object NetworkHandle {
         register(WrappedResult::decode, NetworkDirection.PLAY_TO_CLIENT)
         register(RequestRemoteTake::decode, NetworkDirection.PLAY_TO_SERVER)
         register(ResponsePack::decode, NetworkDirection.PLAY_TO_CLIENT)
+        register(TransformRecipePack::decode, NetworkDirection.PLAY_TO_SERVER)
+        register(SetSlotPacket::decode, NetworkDirection.PLAY_TO_SERVER)
     }
 }

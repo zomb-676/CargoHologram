@@ -7,7 +7,6 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.item.ItemStack
-import org.apache.http.util.Asserts
 
 class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
     AbstractContainerScreen<CraftMenu>(menu, inv, component) {
@@ -15,6 +14,7 @@ class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
     private var cursor = AreaImmute.ofFullScreen().asBaseCursor()
     private var currentCount = 1
     private val materialAreas = MutableList(9) { _ -> AreaImmute.ofFullScreen() }
+    private var hoveredItem: ItemStack? = null
 
     var mainArea: AreaImmute = cursor
         private set
@@ -25,11 +25,13 @@ class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
     }
 
     override fun renderBg(pGuiGraphics: GuiGraphics, pPartialTick: Float, pMouseX: Int, pMouseY: Int) {
-        this.renderBackground(pGuiGraphics)
     }
 
     @Suppress("NAME_SHADOWING")
     override fun render(pGuiGraphics: GuiGraphics, pMouseX: Int, pMouseY: Int, pPartialTick: Float) {
+        hoveredItem = null
+
+        this.renderBg(pGuiGraphics, pPartialTick, pMouseX, pMouseY)
         val draw = mainArea.asBaseCursor().forDraw(pGuiGraphics)
         draw.fill(ARGBColor.Presets.GREY.halfAlpha())
         draw.outline(ARGBColor.Presets.WHITE)
@@ -37,33 +39,49 @@ class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
         draw.assignUp(66).draw(pGuiGraphics) { draw ->
             draw.outline(ARGBColor.Presets.WHITE).autoMove(false)
             draw.inner(5)
-            for (x in 0..2) {
+            for (y in 0..2) {
                 draw.newAnchor()
-                for (y in 0..2) {
+                for (x in 0..2) {
 
-                    val index = x * 3 + y
+                    val index = x + y * 3
                     materialAreas[index] = draw.subArea(UIConstant.ITEM_SIZE_WITH_PADDING)
-                    draw.fill(UIConstant.ITEM_SIZE_WITH_PADDING)
-                    menu.mateiralHandle.getStackInSlot(index).let { item ->
+                    draw.outline(UIConstant.ITEM_SIZE_WITH_PADDING, color = ARGBColor.Presets.WHITE)
+                    menu.materialHandle.getStackInSlot(index).let { item ->
                         if (item.isEmpty) return@let
-                        draw.move(1, 1).item(item).move(-1,-1)
+                        draw.move(1, 1).item(item).move(-1, -1)
+                        if (draw.inItemRange(pMouseX, pMouseY)) hoveredItem = item
                     }
                     draw.move(x = UIConstant.ITEM_SIZE_WITH_PADDING + 1)
                 }
                 draw.toAnchor().move(y = UIConstant.ITEM_SIZE_WITH_PADDING + 1)
             }
         }
+        materialAreas[5].let { area ->
+            pGuiGraphics.renderOutline(area.x1 + 19, area.y1, 18, 18, ARGBColor.Presets.WHITE.color)
+            val result = menu.resultHandle.getStackInSlot(0)
+            if (result.isEmpty) return@let
+            pGuiGraphics.renderItem(result, area.x1 + 20, area.y1 + 1)
+            pGuiGraphics.renderItemDecorations(minecraft!!.font, result, area.x1 + 20, area.y1 + 1)
+        }
+        draw.upDown(2)
+        draw.outline(ARGBColor.Presets.WHITE).inner(5)
+        for (y in 0..3) {
+            draw.newAnchor().autoMove(false)
+            for (x in 0..8) {
+                val index = x + y * 9
+                draw.outline(UIConstant.ITEM_SIZE_WITH_PADDING, color = ARGBColor.Presets.WHITE)
+                val item = menu.getSlot(10 + index).item
+                if (draw.inItemRange(pMouseX, pMouseY)) hoveredItem = item
+                if (!item.isEmpty) draw.move(1, 1).itemWithDecoration(item).move(-1, -1)
+                draw.move(x = UIConstant.ITEM_SIZE_WITH_PADDING + 1)
+            }
+            draw.toAnchor().move(y = UIConstant.ITEM_SIZE_WITH_PADDING + 1)
+            if (y == 2) draw.move(y = 5)
+        }
+        if (hoveredItem != null && !hoveredItem!!.isEmpty) {
+            draw.tooltipForItem(pMouseX, pMouseY, hoveredItem!!)
+        }
     }
 
     fun craftMaterialSlotsArea(): List<AreaImmute> = materialAreas
-
-    fun set(area: AreaImmute, ingredient: ItemStack) {
-        val index = materialAreas.indexOfFirst { it.isSameArea(area) }
-        set(index, ingredient)
-    }
-
-    fun set(index: Int, ingredient: ItemStack) {
-        Asserts.check(index in 0..8, "index:$index")
-        menu.mateiralHandle.setStackInSlot(index, ingredient)
-    }
 }

@@ -2,11 +2,12 @@ package com.github.zomb_676.cargo_hologram.compact.jei
 
 import com.github.zomb_676.cargo_hologram.AllRegisters
 import com.github.zomb_676.cargo_hologram.CargoHologram
+import com.github.zomb_676.cargo_hologram.SetSlotPacket
+import com.github.zomb_676.cargo_hologram.network.TransformRecipePack
 import com.github.zomb_676.cargo_hologram.ui.CraftMenu
 import com.github.zomb_676.cargo_hologram.ui.CraftScreen
 import com.github.zomb_676.cargo_hologram.ui.MonitorScreen
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
-import com.github.zomb_676.cargo_hologram.util.log
 import com.github.zomb_676.cargo_hologram.util.optional
 import mezz.jei.api.IModPlugin
 import mezz.jei.api.JeiPlugin
@@ -52,9 +53,13 @@ class CargoHologramJeiPlugin : IModPlugin {
                 doTransfer: Boolean,
             ): IRecipeTransferError? {
                 if (doTransfer) {
-                    val output: IRecipeSlotView = recipeSlots.getSlotViews(RecipeIngredientRole.OUTPUT).first()
+                    val output: MutableList<IRecipeSlotView> = recipeSlots.getSlotViews(RecipeIngredientRole.OUTPUT)
                     val inputs: MutableList<IRecipeSlotView> = recipeSlots.getSlotViews(RecipeIngredientRole.INPUT)
-
+                    val outputDisplay = output.map(IRecipeSlotView::getDisplayedItemStack)
+                    val inputDisplay = inputs.map(IRecipeSlotView::getDisplayedItemStack)
+                    TransformRecipePack(
+                        inputDisplay, outputDisplay, doTransfer, maxTransfer, container.type
+                    ).sendToServer()
                 }
                 return null
             }
@@ -69,35 +74,27 @@ class CargoHologramJeiPlugin : IModPlugin {
         registration.addGuiScreenHandler(CraftScreen::class.java) { screen ->
             screen.mainArea.asIGuiProperties(screen)
         }
-        registration.addGhostIngredientHandler(
-            CraftScreen::class.java,
-            object : IGhostIngredientHandler<CraftScreen> {
-                override fun <I : Any?> getTargetsTyped(
-                    gui: CraftScreen,
-                    ingredient: ITypedIngredient<I>,
-                    doStart: Boolean,
-                ): List<IGhostIngredientHandler.Target<I>> =
-                    gui.craftMaterialSlotsArea().map { area ->
-                        object : IGhostIngredientHandler.Target<I> {
-                            override fun accept(ingredient: I) {
-                                if (ingredient is ItemStack) {
-                                    gui.set(area, ingredient)
-                                }
-                            }
-
-                            override fun getArea(): Rect2i = area.asRect2i()
+        registration.addGhostIngredientHandler(CraftScreen::class.java, object : IGhostIngredientHandler<CraftScreen> {
+            override fun <I : Any?> getTargetsTyped(
+                gui: CraftScreen,
+                ingredient: ITypedIngredient<I>,
+                doStart: Boolean,
+            ): List<IGhostIngredientHandler.Target<I>> = gui.craftMaterialSlotsArea().mapIndexed { index, area ->
+                object : IGhostIngredientHandler.Target<I> {
+                    override fun accept(ingredient: I) {
+                        if (ingredient is ItemStack) {
+                            SetSlotPacket(index, ingredient, gui.menu.type).sendToServer()
                         }
                     }
 
-
-                override fun onComplete() {
-
+                    override fun getArea(): Rect2i = area.asRect2i()
                 }
+            }
 
-                override fun shouldHighlightTargets(): Boolean = true
-            })
+            override fun onComplete() {}
+            override fun shouldHighlightTargets(): Boolean = true
+        })
         registration.addGuiContainerHandler(CraftScreen::class.java, object : IGuiContainerHandler<CraftScreen> {
-
 
         })
     }

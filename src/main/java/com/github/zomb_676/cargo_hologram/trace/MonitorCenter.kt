@@ -40,28 +40,23 @@ object MonitorCenter : BusSubscribe {
             queryMap.forEach { (_, v) -> v.clear() }
         }
         dispatcher<LevelTickEvent> { event ->
-            try {
-                if (event.phase != TickEvent.Phase.END) return@dispatcher
-                if (event.side != LogicalSide.SERVER) return@dispatcher
-                val haveTime = event.haveTime() or true
-                val level = event.level as ServerLevel
-                val iter = queryMap[level.dimension()]!!.iterator()
-                val alreadySearched = IntAVLTreeSet()
-                while (iter.hasNext()) {
-                    val (pos, entry) = iter.next()
-                    if (entry.checkValid()) {
-                        if (level.hasChunk(pos.x, pos.z)) {
-                            if (entry.tick(level.getChunk(pos.x, pos.z), alreadySearched, haveTime)) {
-                                entry.send(level, pos)
-                            }
+            if (event.phase != TickEvent.Phase.END) return@dispatcher
+            if (event.side != LogicalSide.SERVER) return@dispatcher
+            val haveTime = event.haveTime() or true
+            val level = event.level as ServerLevel
+            val iter = queryMap[level.dimension()]!!.iterator()
+            val alreadySearched = IntAVLTreeSet()
+            while (iter.hasNext()) {
+                val (pos, entry) = iter.next()
+                if (entry.checkValid()) {
+                    if (level.hasChunk(pos.x, pos.z)) {
+                        if (entry.tick(level.getChunk(pos.x, pos.z), alreadySearched, haveTime)) {
+                            entry.send(level, pos)
                         }
-                    } else {
-                        iter.remove()
                     }
+                } else {
+                    iter.remove()
                 }
-            } catch (e: Exception) {
-                println(e)
-                throw e
             }
         }
     }

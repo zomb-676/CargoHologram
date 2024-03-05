@@ -23,6 +23,7 @@ import net.minecraftforge.api.distmarker.Dist
 import net.minecraftforge.fml.DistExecutor
 import net.minecraftforge.fml.loading.FMLEnvironment
 import net.minecraftforge.network.NetworkDirection
+import net.minecraftforge.registries.IForgeRegistry
 import net.minecraftforge.server.ServerLifecycleHooks
 import org.apache.http.util.Asserts
 import org.slf4j.Logger
@@ -35,6 +36,7 @@ fun String.translate(vararg parameters: Any) = Component.translatable(this, *par
 fun currentServer() = ServerLifecycleHooks.getCurrentServer()!!
 fun currentMinecraft() = Minecraft.getInstance()
 fun currentClientPlayer() = currentMinecraft().player!!
+fun currentRegistryAccess() = currentServer().registryAccess()
 
 fun ResourceLocation.dimKey(): ResourceKey<Level> = ResourceKey.create(Registries.DIMENSION, this)
 fun ResourceLocation.dim(): ServerLevel = currentServer().getLevel(this.dimKey())!!
@@ -173,3 +175,6 @@ fun BlockPos.sectionX() = SectionPos.blockToSectionCoord(this.x)
 fun BlockPos.sectionY() = SectionPos.blockToSectionCoord(this.y)
 fun BlockPos.sectionZ() = SectionPos.blockToSectionCoord(this.z)
 fun BlockPos.toChunkPos() = ChunkPos(this)
+
+fun <T> ResourceLocation.query(registries: IForgeRegistry<T>) = registries.getValue(this)!!
+fun <T> T.location(registries: IForgeRegistry<T>) = registries.getKey(this)!!

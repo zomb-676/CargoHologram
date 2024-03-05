@@ -65,11 +65,17 @@ data object Config : BusSubscribe {
         }
 
         var enableDebug: Boolean = isOnDev()
+            private set
         var maxMonitorRadius = 2
+            private set
         var maxCraftRadius = 1
+            private set
         var allowCrossDimMonitor: Boolean = false
+            private set
         var allowCrossDimCraft: Boolean = false
+            private set
         var adminExempt: Boolean = false
+            private set
         var globalFilter: GlobalFilter = GlobalFilter(ListMode.IGNORE, listOf())
             private set
 
