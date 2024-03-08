@@ -6,8 +6,13 @@
   "compatibilityLevel": "JAVA_8",
   "refmap": "CargoHologram.refmap.json",
   "mixins": [
+    "DiggerItemAccessor",
+    "RandomizableContainerBlockEntityAccessor"
   ],
   "client": [
+    "PostChainAccessor",
+    "PostChainMixin",
+    "TextureManagerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

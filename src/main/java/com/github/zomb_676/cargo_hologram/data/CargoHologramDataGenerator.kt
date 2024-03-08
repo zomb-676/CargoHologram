@@ -4,6 +4,8 @@ import com.github.zomb_676.cargo_hologram.AllRegisters
 import com.github.zomb_676.cargo_hologram.CargoHologram
 import com.github.zomb_676.cargo_hologram.util.BusSubscribe
 import com.github.zomb_676.cargo_hologram.util.Dispatcher
+import net.minecraft.network.chat.MutableComponent
+import net.minecraft.network.chat.contents.TranslatableContents
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.Items
@@ -34,8 +36,10 @@ object CargoHologramDataGenerator : BusSubscribe {
             AllRegisters.Items.apply {
                 monitor.useItemModel(Items.DIAMOND)
                 crafter.useItemModel(Items.DIAMOND)
-                filter.useItemModel(Items.DIAMOND)
+                cargoFilter.useItemModel(Items.DIAMOND)
                 glasses.useItemModel(Items.DIAMOND)
+                itemFilter.useItemModel(Items.NAME_TAG)
+                configureUISTick.useItemModel(Items.DEBUG_STICK)
             }
         }
 
@@ -71,14 +75,23 @@ object CargoHologramDataGenerator : BusSubscribe {
             AllRegisters.Items.apply {
                 monitor.lang("Monitor")
                 crafter.lang("Crafter")
-                filter.lang("Filter")
+                cargoFilter.lang("Cargo Filter")
                 glasses.lang("Monitor Glasses")
+                itemFilter.lang("Item Filter")
+                configureUISTick.lang("Configure UI stick")
             }
+            AllRegisters.tabName.lang(CargoHologram.MOD_NAME)
         }
 
         private fun RegistryObject<out Item>.lang(trans: String) {
             addItem(this, trans)
         }
 
+        private fun MutableComponent.lang(trans: String) {
+            val contents = this.contents
+            if (contents is TranslatableContents) {
+                add(contents.key, trans)
+            } else throw RuntimeException("$this should be TranslateComponent")
+        }
     }
 }

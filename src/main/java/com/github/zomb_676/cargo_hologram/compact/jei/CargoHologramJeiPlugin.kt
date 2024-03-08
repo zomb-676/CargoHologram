@@ -6,6 +6,7 @@ import com.github.zomb_676.cargo_hologram.SetSlotPacket
 import com.github.zomb_676.cargo_hologram.network.TransformRecipePack
 import com.github.zomb_676.cargo_hologram.ui.CraftMenu
 import com.github.zomb_676.cargo_hologram.ui.CraftScreen
+import com.github.zomb_676.cargo_hologram.ui.FilterScreen
 import com.github.zomb_676.cargo_hologram.ui.MonitorScreen
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
 import com.github.zomb_676.cargo_hologram.util.optional
@@ -94,6 +95,27 @@ class CargoHologramJeiPlugin : IModPlugin {
             override fun onComplete() {}
             override fun shouldHighlightTargets(): Boolean = true
         })
+        registration.addGhostIngredientHandler(
+            FilterScreen::class.java,
+            object : IGhostIngredientHandler<FilterScreen> {
+                override fun <I : Any?> getTargetsTyped(
+                    gui: FilterScreen,
+                    ingredient: ITypedIngredient<I>,
+                    doStart: Boolean,
+                ): MutableList<IGhostIngredientHandler.Target<I>> =
+                    mutableListOf(object : IGhostIngredientHandler.Target<I> {
+                        override fun accept(ingredient: I) {
+                            if (ingredient is ItemStack) {
+                                SetSlotPacket(gui.menu.candidateSlot.index, ingredient, gui.menu.type).sendToServer()
+                            }
+                        }
+
+                        override fun getArea(): Rect2i = gui.getCandidateArea()
+                    })
+
+                override fun onComplete() {}
+                override fun shouldHighlightTargets(): Boolean = true
+            })
         registration.addGuiContainerHandler(CraftScreen::class.java, object : IGuiContainerHandler<CraftScreen> {
 
         })

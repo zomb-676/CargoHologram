@@ -5,22 +5,22 @@ import com.github.zomb_676.cargo_hologram.network.PlayerCenteredQueryStopPack
 import com.github.zomb_676.cargo_hologram.network.RequestRemoteTake
 import com.github.zomb_676.cargo_hologram.trace.ClientResultCache
 import com.github.zomb_676.cargo_hologram.trace.QueryRequirement
+import com.github.zomb_676.cargo_hologram.ui.component.BlurConfigure
 import com.github.zomb_676.cargo_hologram.ui.component.ItemComponent
 import com.github.zomb_676.cargo_hologram.util.*
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
-import com.github.zomb_676.cargo_hologram.util.cursor.Cursor
-import com.github.zomb_676.cargo_hologram.util.cursor.GraphicCursor
 import com.github.zomb_676.cargo_hologram.util.interact.InteractHelper
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.components.CycleButton
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.core.BlockPos
+import net.minecraftforge.client.gui.widget.ForgeSlider
 import java.util.*
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.sign
 
-class MonitorScreen : Screen("monitor".literal()) {
+class MonitorScreen : Screen("monitor".literal()), CargoBlurScreen {
 
     private var cursor = AreaImmute.ofFullScreen().asBaseCursor()
     private var currentCount = 1
@@ -49,15 +49,14 @@ class MonitorScreen : Screen("monitor".literal()) {
             .create(0, 0, 100, 100, "".literal()) { button, sortType ->
 
             }
-        sortButton
         addRenderableWidget(sortButton)
     }
 
     @Suppress("NAME_SHADOWING")
     override fun render(pGuiGraphics: GuiGraphics, pMouseX: Int, pMouseY: Int, pPartialTick: Float) {
+        BlurConfigure.render(pGuiGraphics, mainArea)
         hovered = null
         val draw = mainArea.asBaseCursor().forDraw(pGuiGraphics)
-        draw.fill(ARGBColor.Presets.GREY.halfAlpha())
         draw.outline(ARGBColor.Presets.WHITE)
         draw.inner(3)
         draw.assignUp(25).draw(pGuiGraphics) { draw ->

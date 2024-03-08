@@ -1,16 +1,13 @@
 package com.github.zomb_676.cargo_hologram
 
 import com.github.zomb_676.cargo_hologram.CargoHologram.Companion.MOD_ID
-import com.github.zomb_676.cargo_hologram.item.CargoFilter
-import com.github.zomb_676.cargo_hologram.item.CargoMonitor
-import com.github.zomb_676.cargo_hologram.item.CraftPanel
-import com.github.zomb_676.cargo_hologram.item.MonitorGlasses
+import com.github.zomb_676.cargo_hologram.item.*
+import com.github.zomb_676.cargo_hologram.ui.ConfigureScreen
 import com.github.zomb_676.cargo_hologram.ui.CraftMenu
-import com.github.zomb_676.cargo_hologram.util.BusSubscribe
-import com.github.zomb_676.cargo_hologram.util.Dispatcher
-import com.github.zomb_676.cargo_hologram.util.MinecraftItems
-import com.github.zomb_676.cargo_hologram.util.literal
+import com.github.zomb_676.cargo_hologram.ui.FilterMenu
+import com.github.zomb_676.cargo_hologram.util.*
 import net.minecraft.core.registries.Registries
+import net.minecraft.network.chat.MutableComponent
 import net.minecraft.world.flag.FeatureFlags
 import net.minecraft.world.inventory.MenuType
 import net.minecraft.world.item.CreativeModeTab
@@ -33,7 +30,7 @@ object AllRegisters : BusSubscribe {
         arrayOf(ITEM, BLOCK, MENU, TAB).forEach(dispatcher::registerDeferred)
         dispatcher<BuildCreativeModeTabContentsEvent> { event ->
             if (event.tab != CREATIVE_TAB.get()) return@dispatcher
-            sequenceOf(Items.monitor, Items.crafter, Items.filter, Items.glasses)
+            ITEM.entries.asSequence()
                 .map(RegistryObject<out Item>::get)
                 .forEach(event::accept)
         }
@@ -41,9 +38,10 @@ object AllRegisters : BusSubscribe {
         Items.monitor
     }
 
-    val CREATIVE_TAB = TAB.register("cargo") {
+    val tabName: MutableComponent = "itemGroup.$MOD_ID.items".translate()
+    val CREATIVE_TAB: RegistryObject<CreativeModeTab> = TAB.register("cargo") {
         CreativeModeTab.builder()
-            .title(CargoHologram.MOD_NAME.literal())
+            .title(tabName)
             .icon { ItemStack(MinecraftItems.DIAMOND) }
             .build()
     }
@@ -51,12 +49,19 @@ object AllRegisters : BusSubscribe {
     val CRAFTER_MANU: RegistryObject<MenuType<CraftMenu>> = MENU.register("crafter") {
         MenuType(::CraftMenu, FeatureFlags.DEFAULT_FLAGS)
     }
+    val FILTER_MANU: RegistryObject<MenuType<FilterMenu>> = MENU.register("filter") {
+        MenuType(::FilterMenu, FeatureFlags.DEFAULT_FLAGS)
+    }
+
 
     object Items {
         val monitor: RegistryObject<CargoMonitor> = ITEM.register("monitor") { CargoMonitor() }
         val crafter: RegistryObject<CraftPanel> = ITEM.register("craft_panel") { CraftPanel() }
-        val filter: RegistryObject<CargoFilter> = ITEM.register("filter") { CargoFilter() }
+        val cargoFilter: RegistryObject<CargoFilter> = ITEM.register("cargo_filter") { CargoFilter() }
         val glasses: RegistryObject<MonitorGlasses> = ITEM.register("monitor_glasses") { MonitorGlasses() }
+        val itemFilter: RegistryObject<ItemFilter> = ITEM.register("filter_item") { ItemFilter() }
+        val configureUISTick: RegistryObject<Item> =
+            ITEM.register("configure_ui_sitck") { UIConfigureItem(::ConfigureScreen) }
     }
 
 }

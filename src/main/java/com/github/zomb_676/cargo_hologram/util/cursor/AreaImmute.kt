@@ -20,6 +20,7 @@ open class AreaImmute(
         fun ofSize(width: Int, height: Int) = AreaImmute(0, 0, width, height)
 
         fun ofRelative(x: Int, y: Int, width: Int, height: Int) = AreaImmute(x, y, x + width, y + height)
+        fun ofAbsolute(x1: Int, y1: Int, x2: Int, y2: Int) = AreaImmute(x1, y1, x2, y2)
     }
 
     constructor(area: AreaImmute) : this(area.left, area.up, area.right, area.down)

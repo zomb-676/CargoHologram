@@ -1,6 +1,8 @@
 package com.github.zomb_676.cargo_hologram
 
 import com.github.zomb_676.cargo_hologram.selector.Selector
+import com.github.zomb_676.cargo_hologram.ui.CargoBlurScreen
+import com.github.zomb_676.cargo_hologram.ui.component.BlurConfigure
 import com.github.zomb_676.cargo_hologram.util.*
 import net.minecraftforge.common.ForgeConfigSpec
 import net.minecraftforge.fml.ModLoadingContext
@@ -57,6 +59,13 @@ data object Config : BusSubscribe {
                 listOf("minecraft:chest", "jukebox")
             ) { str -> Selector.checkValid(str as String) }
 
+        private val ALLOW_LOOT_CHEST = BUILDER
+            .comment(
+                "if blockEntity has Tag LootTable will not be scanned",
+                "in code subclass of RandomizableContainerBlockEntity support this in vanilla"
+            )
+            .define("allow_loot_chest", false)
+
         private val SPEC: ForgeConfigSpec = BUILDER.build()
 
         override fun registerEvent(dispatcher: Dispatcher) {
@@ -78,6 +87,7 @@ data object Config : BusSubscribe {
             private set
         var globalFilter: GlobalFilter = GlobalFilter(ListMode.IGNORE, listOf())
             private set
+        var allowLootChest: Boolean = false
 
         private fun onLoad(@Suppress("UNUSED_PARAMETER") event: ModConfigEvent) {
             enableDebug = enableDebug or ENABLE_DEBUG.get()
@@ -98,12 +108,23 @@ data object Config : BusSubscribe {
             val strings: List<String> = GLOBAL_LIST.get()
             val globalSelectors = strings.map(Selector::analyze)
             globalFilter = GlobalFilter(globalListMode, globalSelectors)
+
+            allowLootChest = ALLOW_LOOT_CHEST.get()
         }
     }
 
     data object Client : BusSubscribe {
         private val BUILDER = ForgeConfigSpec.Builder()
 
+        private val BLUR_TYPE = BUILDER
+            .defineEnum("blur_type", CargoBlurScreen.BlurType.SELF)
+        private val BLUR_RADIUS = BUILDER.push("blur_style")
+            .defineInRange("blur_radius", 20.0, 0.1, 100.0)
+        private val BLUR_EXPAND_Y = BUILDER
+            .defineInRange("blur_expand_y", 10,0, Int.MAX_VALUE)
+        private val BLUR_BG_ALPHA = BUILDER
+            .defineInRange("blur_bg_alpha",0x7f,0,0xff)
+        private val next = BUILDER.pop()
 
         private val SPEC: ForgeConfigSpec = BUILDER.build()
 
@@ -112,8 +133,20 @@ data object Config : BusSubscribe {
             dispatcher<_>(::onLoad)
         }
 
-        private fun onLoad(@Suppress("UNUSED_PARAMETER") event: ModConfigEvent) {
+        var blurType = CargoBlurScreen.BlurType.SELF
+            private set
 
+        private fun onLoad(@Suppress("UNUSED_PARAMETER") event: ModConfigEvent) {
+            this.blurType = BLUR_TYPE.get()
+            BlurConfigure.blurRadius = BLUR_RADIUS.get().toFloat()
+            BlurConfigure.blurExpandY = BLUR_EXPAND_Y.get()
+            BlurConfigure.blurBgAlpha = BLUR_BG_ALPHA.get()
+        }
+
+        fun saveBlurConfigure() {
+            BLUR_RADIUS.set(BlurConfigure.blurRadius.toDouble())
+            BLUR_EXPAND_Y.set(BlurConfigure.blurExpandY)
+            BLUR_BG_ALPHA.set(BlurConfigure.blurBgAlpha)
         }
     }
 

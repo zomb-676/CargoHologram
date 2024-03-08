@@ -1,0 +1,41 @@
+{
+  "targets": [
+    "swap",
+    "temp"
+  ],
+  "passes": [
+    {
+      "name": "cargo_hologram:blur",
+      "intarget": "minecraft:main",
+      "outtarget": "swap",
+      "uniforms": [
+        {
+          "name": "BlurDir",
+          "values": [
+            1.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "cargo_hologram:blur",
+      "intarget": "swap",
+      "outtarget": "temp",
+      "uniforms": [
+        {
+          "name": "BlurDir",
+          "values": [
+            0.0,
+            1.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "blit",
+      "intarget": "temp",
+      "outtarget": "minecraft:main"
+    }
+  ]
+}

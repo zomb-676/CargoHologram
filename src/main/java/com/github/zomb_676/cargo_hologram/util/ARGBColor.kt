@@ -41,8 +41,8 @@ value class ARGBColor private constructor(val color: Int) {
     }
 
     object Presets {
-        val GREY = of(0x7f, 0x7f, 0x7f)
-        val WHITE = of(0xff, 0xff, 0xff)
+        val GREY = of(0x7f, 0x7f, 0x7f).fullAlpha()
+        val WHITE = of(0xff, 0xff, 0xff).fullAlpha()
     }
 
     fun alpha(): Int = color ushr ALPHA_BIT_OFFSET and 0xff

@@ -37,6 +37,7 @@ fun currentServer() = ServerLifecycleHooks.getCurrentServer()!!
 fun currentMinecraft() = Minecraft.getInstance()
 fun currentClientPlayer() = currentMinecraft().player!!
 fun currentRegistryAccess() = currentServer().registryAccess()
+fun currentMcFont() = Minecraft.getInstance().font
 
 fun ResourceLocation.dimKey(): ResourceKey<Level> = ResourceKey.create(Registries.DIMENSION, this)
 fun ResourceLocation.dim(): ServerLevel = currentServer().getLevel(this.dimKey())!!
@@ -178,3 +179,6 @@ fun BlockPos.toChunkPos() = ChunkPos(this)
 
 fun <T> ResourceLocation.query(registries: IForgeRegistry<T>) = registries.getValue(this)!!
 fun <T> T.location(registries: IForgeRegistry<T>) = registries.getKey(this)!!
+
+operator fun MutableComponent.plus(component: Component): MutableComponent = this.append(component)
+operator fun String.plus(component: Component): MutableComponent = this.literal().append(component)

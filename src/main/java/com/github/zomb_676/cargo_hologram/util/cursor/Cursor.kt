@@ -1,9 +1,12 @@
 package com.github.zomb_676.cargo_hologram.util.cursor
 
+import com.github.zomb_676.cargo_hologram.util.currentMinecraft
 import com.github.zomb_676.cargo_hologram.util.cursor.NoRemainSpaceException.Companion.noHeight
 import com.github.zomb_676.cargo_hologram.util.cursor.NoRemainSpaceException.Companion.noWidth
+import com.sun.jna.platform.win32.OaIdl.INVOKEKIND
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.components.AbstractWidget
+import org.apache.logging.log4j.core.tools.picocli.CommandLine.Option
 import java.util.*
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
@@ -172,7 +175,16 @@ class Cursor<T : Cursor<T>>(
         widget.height = height
     }
 
+    @OptIn(ExperimentalContracts::class)
     inline fun draw(guiGraphics: GuiGraphics, f: (GraphicCursor<*>) -> Unit) {
+        contract { callsInPlace(f,InvocationKind.EXACTLY_ONCE) }
         f(this.forDraw(guiGraphics))
+    }
+
+    fun expandXMax(): T {
+        val maxWidth = currentMinecraft().window.guiScaledWidth
+        this.leftLeft(x1)
+        this.rightRight(maxWidth - x2)
+        return self()
     }
 }

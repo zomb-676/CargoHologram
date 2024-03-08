@@ -51,13 +51,7 @@ minecraft {
     // By default, the folder name of a run configuration is the name of the Gradle project containing it.
     // generateRunFolders = true
 
-    // This property enables access transformers for use in development.
-    // They will be applied to the Minecraft artifact.
-    // The access transformer file can be anywhere in the project.
-    // However, it must be at "META-INF/accesstransformer.cfg" in the final mod jar to be loaded by Forge.
-    // This default location is a best practice to automatically put the file in the right place in the final jar.
-    // See https://docs.minecraftforge.net/en/latest/advanced/accesstransformers/ for more information.
-    // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
     // Default run configurations.
     // These can be tweaked, removed, or duplicated as needed.
@@ -138,6 +132,13 @@ repositories {
             includeGroup "curse.maven"
         }
     }
+    maven {
+        name 'IzzelAliz Maven'
+        url 'https://maven.izzel.io/releases/'
+        content {
+            includeGroup "icyllis.modernui"
+        }
+    }
 }
 
 dependencies {
@@ -164,22 +165,39 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 
     annotationProcessor('org.spongepowered:mixin:0.8.5:processor')
+
+    //kotlin lib
     minecraftLibrary("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version") {
+        exclude group: 'org.jetbrains', module: 'annotations'
+    }
+    minecraftLibrary("org.jetbrains.kotlin:kotlin-reflect:$kotlin_version") {
         exclude group: 'org.jetbrains', module: 'annotations'
     }
 
     jarJar("org.jetbrains.kotlin:kotlin-stdlib:[$kotlin_version,2.0)") {
         exclude group: 'org.jetbrains', module: 'annotations'
     }
+    jarJar("org.jetbrains.kotlin:kotlin-reflect:[$kotlin_version,2.0)") {
+        exclude group: 'org.jetbrains', module: 'annotations'
+    }
 
     def jei_version = "15.3.0.4"
 
+    //jei
     compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"))
     compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"))
     runtimeOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}"))
 
+    //
     runtimeOnly(fg.deobf("curse.maven:n-237875:4620461"))
     runtimeOnly(fg.deobf("curse.maven:cyclops-core-232758:5080553"))
+
+    //modern ui
+    //def modernui_version = "3.10.0"
+    //minecraftLibrary("icyllis.modernui:ModernUI-Core:${modernui_version}")
+    //minecraftLibrary("icyllis.modernui:ModernUI-Markdown:${modernui_version}")
+    //implementation fg.deobf("icyllis.modernui:ModernUI-Forge:${minecraft_version}-${modernui_version}.+")
+
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

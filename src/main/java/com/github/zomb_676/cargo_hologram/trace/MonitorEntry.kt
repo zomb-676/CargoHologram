@@ -25,8 +25,11 @@ class MonitorEntry {
         if (!(haveTime || requirement.force())) return false
         val builder = MonitorRawResult.beginBuild()
         chunk.blockEntities.forEach { (_, blockEntity: BlockEntity) ->
-            if (requirement.filterBlockEntity(blockEntity)) {
-                builder.collectForBlockEntity(blockEntity, requirement.slotFilterForBlockEntity(blockEntity), alreadySearched)
+            if (GlobalFilter.filterBlockEntity(blockEntity) && requirement.filterBlockEntity(blockEntity)) {
+                builder.collectForBlockEntity(
+                    blockEntity,
+                    requirement.slotFilterForBlockEntity(blockEntity), alreadySearched
+                )
             }
         }
         result = builder.build()

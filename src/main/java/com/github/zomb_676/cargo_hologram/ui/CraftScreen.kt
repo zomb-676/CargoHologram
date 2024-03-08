@@ -1,5 +1,6 @@
 package com.github.zomb_676.cargo_hologram.ui
 
+import com.github.zomb_676.cargo_hologram.ui.component.BlurConfigure
 import com.github.zomb_676.cargo_hologram.util.ARGBColor
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
 import net.minecraft.client.gui.GuiGraphics
@@ -9,7 +10,7 @@ import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.item.ItemStack
 
 class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
-    AbstractContainerScreen<CraftMenu>(menu, inv, component) {
+    AbstractContainerScreen<CraftMenu>(menu, inv, component), CargoBlurScreen {
 
     private var cursor = AreaImmute.ofFullScreen().asBaseCursor()
     private var currentCount = 1
@@ -25,13 +26,13 @@ class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
     }
 
     override fun renderBg(pGuiGraphics: GuiGraphics, pPartialTick: Float, pMouseX: Int, pMouseY: Int) {
+        BlurConfigure.render(pGuiGraphics, mainArea)
     }
 
     @Suppress("NAME_SHADOWING")
     override fun render(pGuiGraphics: GuiGraphics, pMouseX: Int, pMouseY: Int, pPartialTick: Float) {
-        hoveredItem = null
-
         this.renderBg(pGuiGraphics, pPartialTick, pMouseX, pMouseY)
+        hoveredItem = null
         val draw = mainArea.asBaseCursor().forDraw(pGuiGraphics)
         draw.fill(ARGBColor.Presets.GREY.halfAlpha())
         draw.outline(ARGBColor.Presets.WHITE)

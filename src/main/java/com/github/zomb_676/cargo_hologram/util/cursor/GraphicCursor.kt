@@ -1,19 +1,27 @@
 package com.github.zomb_676.cargo_hologram.util.cursor
 
+import com.github.zomb_676.cargo_hologram.CargoHologramSpriteUploader
 import com.github.zomb_676.cargo_hologram.ui.UIConstant
-import com.github.zomb_676.cargo_hologram.util.ARGBColor
-import com.github.zomb_676.cargo_hologram.util.MoveData
-import com.github.zomb_676.cargo_hologram.util.asItemStack
-import com.github.zomb_676.cargo_hologram.util.optional
+import com.github.zomb_676.cargo_hologram.util.*
+import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.vertex.BufferUploader
+import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import com.mojang.blaze3d.vertex.Tesselator
+import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.inventory.tooltip.TooltipComponent
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.Block
 import java.util.*
+import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.sin
 
-class GraphicCursor<T : Cursor<T>>(private val cursor: Cursor<T>, private val guiGraphics: GuiGraphics) :
+class GraphicCursor<T : Cursor<T>>(val cursor: Cursor<T>, private val guiGraphics: GuiGraphics) :
     IArea by cursor, AreaTransform<T> by cursor {
 
     private val moveData = MoveData(0, 0)
@@ -64,6 +72,94 @@ class GraphicCursor<T : Cursor<T>>(private val cursor: Cursor<T>, private val gu
             FONT, str, (x1 + modifyX + x2) / 2, ((y1 + modifyY + y2) / 2) - HALF_FONT_HEIGHT, color.color
         )
         return this
+    }
+
+    fun centeredString(str: Component, color: ARGBColor = ARGBColor.Presets.WHITE): GraphicCursor<T> {
+        guiGraphics.drawCenteredString(
+            FONT, str, (x1 + modifyX + x2) / 2, ((y1 + modifyY + y2) / 2) - HALF_FONT_HEIGHT, color.color
+        )
+        return this
+    }
+
+    fun scrollingString(str: Component, color: ARGBColor) {
+        val fontWidth = FONT.width(str)
+        val strY = (y1 + y2 - 9) / 2 + 1
+        val remainWidth = x2 - x1
+        if (fontWidth > remainWidth) {
+            val spillWidth = fontWidth - remainWidth
+            val d0 = net.minecraft.Util.getMillis().toDouble() / 1000.0
+            val d1 = max(spillWidth.toDouble() * 0.5, 3.0)
+            val d2 = sin((Math.PI / 2.0) * cos((Math.PI * 2.0) * d0 / d1)) / 2.0 + 0.5
+            val d3 = net.minecraft.util.Mth.lerp(d2, 0.0, spillWidth.toDouble())
+            guiGraphics.enableScissor(x1, y1, x2, y2)
+            guiGraphics.drawString(FONT, str, x1 - d3.toInt(), strY, color.color)
+            guiGraphics.disableScissor()
+        } else {
+            guiGraphics.drawCenteredString(FONT, str, (x1 + x2) / 2, strY, color.color)
+        }
+    }
+
+    fun fill(
+        atlas: ResourceLocation,
+        path: ResourceLocation,
+        area: AreaImmute,
+        color: ARGBColor = ARGBColor.Presets.WHITE,
+    ) {
+        val atlasSprite = currentMinecraft().getTextureAtlas(atlas).apply(path)
+        val minU = atlasSprite.u0
+        val maxU = atlasSprite.u1
+        val minV = atlasSprite.v0
+        val maxV = atlasSprite.v1
+
+        val r = color.red()
+        val g = color.green()
+        val b = color.blue()
+        val alpha = color.alpha()
+
+        val z = 100.0f
+
+        val minX = area.x1.toFloat()
+        val maxX = area.x2.toFloat()
+        val minY = area.y2.toFloat()
+        val maxY = area.y1.toFloat()
+
+        RenderSystem.setShaderTexture(0, atlas)
+        RenderSystem.setShader(GameRenderer::getPositionColorShader)
+        RenderSystem.enableBlend()
+        val matrix = guiGraphics.pose().last().pose()
+        val buffer = Tesselator.getInstance().builder
+        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX)
+        buffer.vertex(matrix, minX, minY, z).color(r, g, b, alpha).uv(minU, minV).endVertex()
+        buffer.vertex(matrix, minX, maxY, z).color(r, g, b, alpha).uv(minU, maxV).endVertex()
+        buffer.vertex(matrix, maxX, maxY, z).color(r, g, b, alpha).uv(maxU, maxV).endVertex()
+        buffer.vertex(matrix, maxX, minY, z).color(r, g, b, alpha).uv(maxU, minV).endVertex()
+        BufferUploader.drawWithShader(buffer.end())
+        RenderSystem.disableBlend()
+    }
+
+    fun fillStretch(
+        atlas: ResourceLocation,
+        path: ResourceLocation,
+        color: ARGBColor = ARGBColor.Presets.WHITE,
+    ) {
+        fill(atlas, path, this.cursor, color)
+    }
+
+    fun fillNoStretch(
+        atlas: ResourceLocation,
+        path: ResourceLocation,
+        color: ARGBColor = ARGBColor.Presets.WHITE,
+    ) {
+        val sprite = currentMinecraft().getTextureAtlas(atlas).apply(path)
+        val area = AreaImmute.ofAbsolute(sprite.x, sprite.y, sprite.contents().width(), sprite.contents().height())
+        fill(atlas, path, area, color)
+    }
+
+    /**
+     * @param path [UIConstant.Paths]
+     */
+    fun fillCargoWidget(path: ResourceLocation) {
+        fillStretch(CargoHologramSpriteUploader.ATLAS_LOCATION, path)
     }
 
     /**

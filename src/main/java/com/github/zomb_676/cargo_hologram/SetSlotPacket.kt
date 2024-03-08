@@ -2,6 +2,7 @@ package com.github.zomb_676.cargo_hologram
 
 import com.github.zomb_676.cargo_hologram.network.NetworkPack
 import com.github.zomb_676.cargo_hologram.ui.CraftMenu
+import com.github.zomb_676.cargo_hologram.ui.FilterMenu
 import com.github.zomb_676.cargo_hologram.util.location
 import com.github.zomb_676.cargo_hologram.util.log
 import com.github.zomb_676.cargo_hologram.util.logOnDebug
@@ -38,6 +39,12 @@ data class SetSlotPacket(val slot: Int, val item: ItemStack, val menuType: MenuT
             }
             when (containerMenu) {
                 is CraftMenu -> containerMenu.setSlotItem(slot, item)
+                is FilterMenu -> {
+                    containerMenu.apply {
+                        candidateSlot.set(item)
+                        sendAllDataToRemote()
+                    }
+                }
                 else -> log { debug("un-processed SetSlotPacket for menuType:$menuType") }
             }
         }
