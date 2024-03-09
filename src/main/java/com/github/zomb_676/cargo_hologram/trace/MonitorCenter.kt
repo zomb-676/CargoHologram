@@ -19,7 +19,7 @@ import net.minecraftforge.event.level.LevelEvent as ForgeLevelEvent
  */
 object MonitorCenter : BusSubscribe {
 
-    private val queryMap: MutableMap<ResourceKey<Level>, MutableMap<ChunkPos, MonitorEntry>> = mutableMapOf()
+    val queryMap: MutableMap<ResourceKey<Level>, MutableMap<ChunkPos, MonitorEntry>> = mutableMapOf()
 
     override fun registerEvent(dispatcher: Dispatcher) {
         dispatcher<ForgeLevelEvent.Unload> { event ->

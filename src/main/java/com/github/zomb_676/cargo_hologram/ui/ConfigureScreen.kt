@@ -16,7 +16,7 @@ class ConfigureScreen : Screen("Configure".literal()), CargoBlurScreen {
     lateinit var blurSlider: CargoSlider
     lateinit var blurExpandSlider: CargoSlider
     lateinit var blurBgAlpha: CargoSlider
-    lateinit var blurOutline : CargoCheckBox
+    lateinit var blurOutline: CargoCheckBox
 
     override fun init() {
         mainArea = AreaImmute.ofFullScreen().asBaseCursor()
@@ -39,23 +39,23 @@ class ConfigureScreen : Screen("Configure".literal()), CargoBlurScreen {
         draw.outline(ARGBColor.Presets.WHITE)
         draw.inner(5)
         draw.assignUp(15).draw(pGuiGraphics) { draw ->
-            draw.string("blur radius")
             draw.assignRight(120, blurSlider::assign)
+            draw.centeredString("blur radius")
         }
         draw.upDown(3)
         draw.assignUp(15).draw(pGuiGraphics) { draw ->
-            draw.string("expand y")
             draw.assignRight(120, blurExpandSlider::assign)
+            draw.centeredString("expand y")
         }
         draw.upDown(3)
         draw.assignUp(15).draw(pGuiGraphics) { draw ->
-            draw.string("blur bg alpha")
             draw.assignRight(120, blurBgAlpha::assign)
+            draw.centeredString("blur bg alpha")
         }
         draw.upDown(3)
         draw.assignUp(15).draw(pGuiGraphics) { draw ->
-            draw.string("blur bg alpha")
-            draw.assignRight(15, blurOutline::assign)
+            draw.assignRight(120).assignRight(15, blurOutline::assign)
+            draw.centeredString("blur bg alpha")
         }
         super.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick)
     }

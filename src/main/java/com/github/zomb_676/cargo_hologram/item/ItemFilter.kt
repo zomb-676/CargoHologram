@@ -17,7 +17,7 @@ import net.minecraft.world.item.TooltipFlag
 import net.minecraft.world.level.Level
 import net.minecraftforge.network.NetworkHooks
 
-class ItemFilter : Item(Properties()) {
+class ItemFilter : Item(Properties().stacksTo(1)) {
     override fun use(pLevel: Level, pPlayer: Player, pUsedHand: InteractionHand): InteractionResultHolder<ItemStack> {
         if (!pLevel.isClientSide) {
             NetworkHooks.openScreen(pPlayer as ServerPlayer, object : MenuProvider {

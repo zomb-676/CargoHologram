@@ -14,7 +14,6 @@ import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.components.CycleButton
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.core.BlockPos
-import net.minecraftforge.client.gui.widget.ForgeSlider
 import java.util.*
 import kotlin.math.ceil
 import kotlin.math.max
@@ -23,7 +22,7 @@ import kotlin.math.sign
 class MonitorScreen : Screen("monitor".literal()), CargoBlurScreen {
 
     private var cursor = AreaImmute.ofFullScreen().asBaseCursor()
-    private var currentCount = 1
+    private var currentRowIndex = 1
 
     var mainArea: AreaImmute = cursor
         private set
@@ -83,22 +82,22 @@ class MonitorScreen : Screen("monitor".literal()), CargoBlurScreen {
                 draw.inner(2)
                 draw.outline((ARGBColor.Presets.WHITE))
                 draw.inner(2)
-                val totalCount = ClientResultCache.count()
-                val actualHeight = ceil(totalCount / widthCount.toDouble()).toInt()
-                currentCount = currentCount.coerceIn(1, max(actualHeight - heightCount + 1, 1))
-                if (actualHeight <= heightCount) {
+                val totalHeight = ClientResultCache.count()
+                val showHeight = ceil(totalHeight / widthCount.toDouble()).toInt()
+                currentRowIndex = currentRowIndex.coerceIn(1, max(showHeight - heightCount + 1, 1))
+                if (showHeight <= heightCount) {
                     draw.fill(ARGBColor.Presets.WHITE)
                 } else {
-                    val oneHeight = 1.0 / actualHeight * draw.height
-                    val take = heightCount * oneHeight
-                    val up = (currentCount - 1) * oneHeight
+                    val oneRowHeight = 1.0 / showHeight * draw.height
+                    val take = heightCount * oneRowHeight
+                    val up = (currentRowIndex - 1) * oneRowHeight
                     draw.upDown(up.toInt())
                     draw.fill(draw.width, take.toInt(), ARGBColor.Presets.WHITE)
                 }
             }
 
             draw.newAnchor()
-            var skipCount = -(currentCount - 1) * widthCount
+            var skipCount = -(currentRowIndex - 1) * widthCount
             var checked = false
             full@ for ((_, result) in ClientResultCache.iter()) {
                 for ((pos, items) in result.iterBy()) {
@@ -158,7 +157,7 @@ class MonitorScreen : Screen("monitor".literal()), CargoBlurScreen {
     override fun isPauseScreen(): Boolean = false
 
     override fun mouseScrolled(pMouseX: Double, pMouseY: Double, pDelta: Double): Boolean {
-        currentCount -= pDelta.toInt().sign
+        currentRowIndex -= pDelta.toInt().sign
         return super.mouseScrolled(pMouseX, pMouseY, pDelta)
     }
 }

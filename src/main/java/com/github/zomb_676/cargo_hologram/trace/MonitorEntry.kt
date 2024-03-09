@@ -12,7 +12,7 @@ import net.minecraft.world.level.chunk.LevelChunk
 class MonitorEntry {
 
     private val requirement: MonitorRequirement = MonitorRequirement()
-    private var result: MonitorRawResult? = null
+    var result: MonitorRawResult? = null
 
     fun cleanResult() {
         result = null

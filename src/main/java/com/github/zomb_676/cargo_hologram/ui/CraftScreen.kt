@@ -1,28 +1,36 @@
 package com.github.zomb_676.cargo_hologram.ui
 
+import com.github.zomb_676.cargo_hologram.trace.ClientResultCache
 import com.github.zomb_676.cargo_hologram.ui.component.BlurConfigure
-import com.github.zomb_676.cargo_hologram.util.ARGBColor
+import com.github.zomb_676.cargo_hologram.ui.component.ItemComponent
+import com.github.zomb_676.cargo_hologram.util.*
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
+import net.minecraft.core.BlockPos
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.item.ItemStack
+import kotlin.math.ceil
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.sign
 
 class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
     AbstractContainerScreen<CraftMenu>(menu, inv, component), CargoBlurScreen {
 
-    private var cursor = AreaImmute.ofFullScreen().asBaseCursor()
-    private var currentCount = 1
+    private var currentRowIndex = 0
     private val materialAreas = MutableList(9) { _ -> AreaImmute.ofFullScreen() }
-    private var hoveredItem: ItemStack? = null
+    var hovered: Pair<BlockPos, SlotItemStack>? = null
 
-    var mainArea: AreaImmute = cursor
+    var mainArea: AreaImmute = AreaImmute.ofFullScreen()
         private set
 
     override fun init() {
-        cursor = AreaImmute.ofSize(width, height).asBaseCursor()
-        mainArea = cursor.percentX(0.6).percentY(0.8).asAreaImmute()
+        super.init()
+        this.leftPos -= 25
+        this.topPos = min(20, (topPos * 0.6).toInt())
+        mainArea = AreaImmute.ofRelative(leftPos, topPos, 176 + 62, 216).asAreaImmute()
     }
 
     override fun renderBg(pGuiGraphics: GuiGraphics, pPartialTick: Float, pMouseX: Int, pMouseY: Int) {
@@ -32,57 +40,111 @@ class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
     @Suppress("NAME_SHADOWING")
     override fun render(pGuiGraphics: GuiGraphics, pMouseX: Int, pMouseY: Int, pPartialTick: Float) {
         this.renderBg(pGuiGraphics, pPartialTick, pMouseX, pMouseY)
-        hoveredItem = null
         val draw = mainArea.asBaseCursor().forDraw(pGuiGraphics)
-        draw.fill(ARGBColor.Presets.GREY.halfAlpha())
-        draw.outline(ARGBColor.Presets.WHITE)
-        draw.inner(2)
-        draw.assignUp(66).draw(pGuiGraphics) { draw ->
-            draw.outline(ARGBColor.Presets.WHITE).autoMove(false)
-            draw.inner(5)
-            for (y in 0..2) {
-                draw.newAnchor()
-                for (x in 0..2) {
+        draw.outline(ARGBColor.Vanilla.WHITE)
+        menu.slots.forEach { slot ->
+            val x = slot.x + leftPos
+            val y = slot.y + topPos
+            pGuiGraphics.renderOutline(x - 1, y - 1, 18, 18, ARGBColor.Presets.WHITE.color)
+            if (!slot.item.isEmpty) {
+                pGuiGraphics.renderItem(slot.item, x, y)
+                pGuiGraphics.renderItemDecorations(minecraft!!.font, slot.item, x, y)
+            }
+            if (this.isHovering(slot.x, slot.y, 16, 16, pMouseX.toDouble(), pMouseY.toDouble())) {
+                this.hoveredSlot = slot
+                pGuiGraphics.fill(x, y, x + 16, y + 16, ARGBColor.Presets.GREY.color)
+                if (!slot.item.isEmpty)
+                    pGuiGraphics.renderTooltip(minecraft!!.font, slot.item, pMouseX, pMouseY)
+            }
+        }
+        val carried = menu.carried
+        if (!carried.isEmpty) {
+            val pose = pGuiGraphics.pose()
+            pose.pushPose()
+            pose.translate(0.0f, 0.0f, 232.0f)
+            pGuiGraphics.renderItem(carried, pMouseX - 8, pMouseY - 8)
+            pGuiGraphics.renderItemDecorations(minecraft!!.font, carried, pMouseX - 8, pMouseY - 8)
+            pose.popPose()
+        }
+        val monitorArea = draw
+            .downUp(80)
+            .inner(3)
+            .forDraw(pGuiGraphics)
+        monitorArea.outline(ARGBColor.Vanilla.WHITE)
 
-                    val index = x + y * 3
-                    materialAreas[index] = draw.subArea(UIConstant.ITEM_SIZE_WITH_PADDING)
-                    draw.outline(UIConstant.ITEM_SIZE_WITH_PADDING, color = ARGBColor.Presets.WHITE)
-                    menu.materialHandle.getStackInSlot(index).let { item ->
-                        if (item.isEmpty) return@let
-                        draw.move(1, 1).item(item).move(-1, -1)
-                        if (draw.inItemRange(pMouseX, pMouseY)) hoveredItem = item
-                    }
-                    draw.move(x = UIConstant.ITEM_SIZE_WITH_PADDING + 1)
+        val sideArea = monitorArea.assignRight(10)
+
+        val widthCount = monitorArea.width / UIConstant.ITEM_SIZE_WITH_PADDING
+        val heightCount = monitorArea.height / UIConstant.ITEM_SIZE_WITH_PADDING
+        monitorArea.innerX((monitorArea.width - widthCount * UIConstant.ITEM_SIZE_WITH_PADDING) / 2)
+        monitorArea.innerY((monitorArea.height - heightCount * UIConstant.ITEM_SIZE_WITH_PADDING) / 2)
+        var drawCount = 0
+
+        if (ClientResultCache.isEmpty()) {
+            monitorArea.centeredString("no cache received")
+        } else {
+            sideArea.draw(pGuiGraphics) { draw ->
+                draw.inner(2)
+                draw.outline((ARGBColor.Presets.WHITE))
+                draw.inner(2)
+                val totalHeight = ClientResultCache.count()
+                val showHeight = ceil(totalHeight / widthCount.toDouble()).toInt()
+                currentRowIndex = currentRowIndex.coerceIn(1, max(showHeight - heightCount + 1, 1))
+                if (showHeight <= heightCount) {
+                    draw.fill(ARGBColor.Presets.WHITE)
+                } else {
+                    val oneRowHeight = 1.0 / showHeight * draw.height
+                    val take = heightCount * oneRowHeight
+                    val up = (currentRowIndex - 1) * oneRowHeight
+                    draw.upDown(up.toInt())
+                    draw.fill(draw.width, take.toInt(), ARGBColor.Presets.WHITE)
                 }
-                draw.toAnchor().move(y = UIConstant.ITEM_SIZE_WITH_PADDING + 1)
             }
-        }
-        materialAreas[5].let { area ->
-            pGuiGraphics.renderOutline(area.x1 + 19, area.y1, 18, 18, ARGBColor.Presets.WHITE.color)
-            val result = menu.resultHandle.getStackInSlot(0)
-            if (result.isEmpty) return@let
-            pGuiGraphics.renderItem(result, area.x1 + 20, area.y1 + 1)
-            pGuiGraphics.renderItemDecorations(minecraft!!.font, result, area.x1 + 20, area.y1 + 1)
-        }
-        draw.upDown(2)
-        draw.outline(ARGBColor.Presets.WHITE).inner(5)
-        for (y in 0..3) {
-            draw.newAnchor().autoMove(false)
-            for (x in 0..8) {
-                val index = x + y * 9
-                draw.outline(UIConstant.ITEM_SIZE_WITH_PADDING, color = ARGBColor.Presets.WHITE)
-                val item = menu.getSlot(10 + index).item
-                if (draw.inItemRange(pMouseX, pMouseY)) hoveredItem = item
-                if (!item.isEmpty) draw.move(1, 1).itemWithDecoration(item).move(-1, -1)
-                draw.move(x = UIConstant.ITEM_SIZE_WITH_PADDING + 1)
+
+            draw.newAnchor()
+            var skipCount = -(currentRowIndex - 1) * widthCount
+            var checked = false
+            full@ for ((_, result) in ClientResultCache.iter()) {
+                for ((pos, items) in result.iterBy()) {
+                    val block = currentClientPlayer().level().getBlockState(pos).block
+                    slot@ for ((slot, item) in items) {
+                        if (++skipCount <= 0) continue@slot
+                        drawCount++
+                        if (drawCount > widthCount) {
+                            drawCount = 1
+                            draw.nextLine().move(y = 2).newAnchor()
+                            if (!draw.haveSpace(addY = 1)) break@full
+                        }
+                        val check = draw.inItemRange(pMouseX, pMouseY)
+                        if (check && !checked) {
+                            checked = true
+                            draw.fill(18, color = ARGBColor.Presets.WHITE.halfAlpha())
+                            draw.tooltipComponent(
+                                pMouseX,
+                                pMouseY,
+                                item.gatherTooltip()
+                                    .append("slot:$slot".literal())
+                                    .append("located:(x:${pos.x},y:${pos.y},z:${pos.z})".literal()),
+                                ItemComponent(block)
+                            )
+                            hovered = pos to SlotItemStack(slot, item)
+                        }
+                        draw.move(1, 1).itemWithDecoration(item).move(1, -1)
+                    }
+                }
             }
-            draw.toAnchor().move(y = UIConstant.ITEM_SIZE_WITH_PADDING + 1)
-            if (y == 2) draw.move(y = 5)
-        }
-        if (hoveredItem != null && !hoveredItem!!.isEmpty) {
-            draw.tooltipForItem(pMouseX, pMouseY, hoveredItem!!)
         }
     }
 
-    fun craftMaterialSlotsArea(): List<AreaImmute> = materialAreas
+    fun craftMaterialSlotsArea(): List<AreaImmute> =
+        List(9) { index ->
+            val slot = menu.slots[index]
+            AreaImmute.ofRelative(slot.x + leftPos, slot.y + topPos, 16, 16)
+        }
+
+    override fun mouseScrolled(pMouseX: Double, pMouseY: Double, pDelta: Double): Boolean {
+        currentRowIndex -= pDelta.toInt().sign
+        return super.mouseScrolled(pMouseX, pMouseY, pDelta)
+    }
+
 }

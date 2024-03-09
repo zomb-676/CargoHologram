@@ -116,9 +116,6 @@ class CargoHologramJeiPlugin : IModPlugin {
                 override fun onComplete() {}
                 override fun shouldHighlightTargets(): Boolean = true
             })
-        registration.addGuiContainerHandler(CraftScreen::class.java, object : IGuiContainerHandler<CraftScreen> {
-
-        })
     }
 
     /**
