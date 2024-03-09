@@ -67,4 +67,9 @@ class FilterMenu(containerId: Int, val playerInv: Inventory) :
         }
         return true
     }
+
+    override fun removed(pPlayer: Player) {
+        super.removed(pPlayer)
+        if (pPlayer.level().isClientSide) return
+    }
 }

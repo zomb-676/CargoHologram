@@ -3,7 +3,11 @@ package com.github.zomb_676.cargo_hologram.util.filter
 import com.github.zomb_676.cargo_hologram.mixin.DiggerItemAccessor
 import com.github.zomb_676.cargo_hologram.util.literal
 import com.github.zomb_676.cargo_hologram.util.plus
+import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.core.registries.Registries
+import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.tags.TagKey
 import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.LivingEntity
@@ -17,9 +21,17 @@ import java.util.function.Predicate
 
 sealed class ItemTrait : Predicate<ItemStack> {
 
-
     open fun rawDescription(itemStack: ItemStack): String = TODO()
     open fun description(itemStack: ItemStack): Component = rawDescription(itemStack).literal()
+    open fun additionData(tag: CompoundTag) {}
+    fun writeToNbt(tag: CompoundTag) {
+        val innerTag = CompoundTag()
+        innerTag.putString(COMPOUND_TYPE_KEY, this::class.java.simpleName)
+        this.additionData(innerTag)
+        tag.put(COMPOUND_NAME, innerTag)
+    }
+
+    fun writeToItemNbt(item: ItemStack) = writeToNbt(item.orCreateTag)
 
     override fun test(item: ItemStack): Boolean = TODO("Not yet implemented")
 
@@ -27,6 +39,7 @@ sealed class ItemTrait : Predicate<ItemStack> {
         override fun test(item: ItemStack): Boolean = item.isStackable
         override fun rawDescription(itemStack: ItemStack): String = if (test(itemStack)) "stackable" else "un-stackable"
     }
+
 
     data object Placeable : ItemTrait() {
         override fun test(item: ItemStack): Boolean = item.item is BlockItem
@@ -99,20 +112,37 @@ sealed class ItemTrait : Predicate<ItemStack> {
         override fun description(itemStack: ItemStack): Component =
             if (test(itemStack)) "under tab:".literal() + tab.displayName else "not under tab".literal() + tab.displayName
 
+        override fun additionData(tag: CompoundTag) {
+            tag.putString(COMPOUND_DATA_KEY, BuiltInRegistries.CREATIVE_MODE_TAB.getKey(tab)!!.toString())
+        }
 
         companion object {
             fun fromItem(itemStack: ItemStack): List<ItemGroup> =
                 CreativeModeTabs.tabs().asSequence().filter { it.contains(itemStack) }.map(::ItemGroup).toList()
+
+            fun fromTag(tag: CompoundTag): ItemGroup {
+                val string = tag.getString(COMPOUND_DATA_KEY)
+                val tab = BuiltInRegistries.CREATIVE_MODE_TAB.get(ResourceLocation(string))!!
+                return ItemGroup(tab)
+            }
         }
     }
 
-    class ItemTag(val tag: TagKey<Item>) : ItemTrait() {
-        override fun test(item: ItemStack): Boolean = item.`is`(tag)
+    class ItemTag(val itemTag: TagKey<Item>) : ItemTrait() {
+        override fun test(item: ItemStack): Boolean = item.`is`(itemTag)
         override fun rawDescription(itemStack: ItemStack): String =
-            if (test(itemStack)) "have tag:${tag.location}" else "not have tag:${tag.location}"
+            if (test(itemStack)) "have tag:${itemTag.location}" else "not have tag:${itemTag.location}"
+
+        override fun additionData(tag: CompoundTag) =
+            tag.putString(COMPOUND_DATA_KEY, itemTag.location.toString())
 
         companion object {
             fun fromItem(itemStack: ItemStack): List<ItemTag> = itemStack.tags.map(::ItemTag).toList()
+            fun fromTag(tag: CompoundTag): ItemTag {
+                val str = tag.getString(COMPOUND_DATA_KEY)
+                val tagKey = TagKey.create(Registries.ITEM, ResourceLocation(str))
+                return ItemTag(tagKey)
+            }
         }
     }
 
@@ -122,11 +152,17 @@ sealed class ItemTrait : Predicate<ItemStack> {
         override fun rawDescription(itemStack: ItemStack): String =
             if (test(itemStack)) "added by mod:$modId" else "not added by mod:$modId"
 
+        override fun additionData(tag: CompoundTag) =
+            tag.putString(COMPOUND_DATA_KEY, modId)
+
         companion object {
             fun fromItem(itemStack: ItemStack): ModId? {
                 val id = itemStack.item.getCreatorModId(itemStack) ?: return null
                 return ModId(id)
             }
+
+            fun fromTag(tag: CompoundTag) =
+                ModId(tag.getString(COMPOUND_DATA_KEY))
         }
     }
 
@@ -144,11 +180,17 @@ sealed class ItemTrait : Predicate<ItemStack> {
         override fun rawDescription(itemStack: ItemStack): String =
             if (test(itemStack)) "dye color:${color.getName()}" else "not dye color:${color.getName()}"
 
+        override fun additionData(tag: CompoundTag) =
+            tag.putByte(COMPOUND_DATA_KEY, color.id.toByte())
+
         companion object {
             fun fromItem(itemStack: ItemStack): Color? {
                 val dye = DyeColor.getColor(itemStack) ?: return null
                 return Color(dye)
             }
+
+            fun fromTag(tag: CompoundTag) =
+                Color(DyeColor.byId(tag.getByte(COMPOUND_DATA_KEY).toInt()))
         }
     }
 
@@ -159,9 +201,15 @@ sealed class ItemTrait : Predicate<ItemStack> {
         override fun test(item: ItemStack): Boolean =
             LivingEntity.getEquipmentSlotForItem(item) == slot
 
+        override fun additionData(tag: CompoundTag) =
+            tag.putByte(COMPOUND_DATA_KEY, slot.ordinal.toByte())
+
         companion object {
             fun fromItem(itemStack: ItemStack) =
                 EquipSlot(LivingEntity.getEquipmentSlotForItem(itemStack))
+
+            fun fromTag(tag: CompoundTag) =
+                EquipSlot(EquipmentSlot.entries[tag.getByte(COMPOUND_DATA_KEY).toInt()])
         }
     }
 
@@ -174,30 +222,43 @@ sealed class ItemTrait : Predicate<ItemStack> {
             return actualItem is DiggerItemAccessor && actualItem.blocks == type
         }
 
+        override fun additionData(tag: CompoundTag) =
+            tag.putString(COMPOUND_DATA_KEY, type.location.toString())
+
         companion object {
             fun fromItem(item: ItemStack) =
                 when (val i = item.item) {
                     is DiggerItemAccessor -> ToolType(i.blocks)
                     else -> null
                 }
+
+            fun fromTag(tag: CompoundTag): ToolType {
+                val str = tag.getString(COMPOUND_DATA_KEY)
+                val tagKey = TagKey.create(Registries.BLOCK, ResourceLocation(str))
+                return ToolType(tagKey)
+            }
         }
     }
 
     companion object {
+        private const val COMPOUND_NAME = "item_trait"
+        private const val COMPOUND_TYPE_KEY = "type"
+        private const val COMPOUND_DATA_KEY = "data"
+
         private val dataTrait = listOf(
             Stackable, Placeable, Edible, FluidContainer, Enchanted, MaxEnchanted,
             CustomName, Damaged, Damageable, Equipable, FurnaceFuel
         )
 
-        fun collect(item: ItemStack): MutableMap<ItemTrait, Component> {
-            val list = mutableMapOf<ItemTrait, Component>()
+        fun collect(item: ItemStack): List<ItemTrait> {
+            val list = mutableListOf<ItemTrait>()
             fun append(traits: List<ItemTrait>) {
-                traits.forEach { trait -> list[trait] = trait.description(item) }
+                traits.forEach { trait -> list += trait }
             }
 
             fun append(trait: ItemTrait?) {
                 if (trait == null) return
-                list[trait] = trait.description(item)
+                list += trait
             }
             append(dataTrait)
             append(ToolType.fromItem(item))
@@ -209,5 +270,40 @@ sealed class ItemTrait : Predicate<ItemStack> {
             return list
         }
 
+        fun readItemTrait(tag: CompoundTag): ItemTrait {
+            val tag = tag.getCompound(COMPOUND_NAME)
+            return when (val name = tag.getString(COMPOUND_TYPE_KEY)) {
+                "Stackable" -> Stackable
+                "Placeable" -> Placeable
+                "Edible" -> Edible
+                "FluidContainer" -> FluidContainer
+                "Enchanted" -> Enchanted
+                "MaxEnchanted" -> MaxEnchanted
+                "CustomName" -> CustomName
+                "Damaged" -> Damaged
+                "Damageable" -> Damageable
+                "Equipable" -> Equipable
+                "FurnaceFuel" -> FurnaceFuel
+                "ItemGroup" -> ItemGroup.fromTag(tag)
+                "ItemTag" -> ItemTag.fromTag(tag)
+                "ModId" -> ModId.fromTag(tag)
+                "Color" -> Color.fromTag(tag)
+                "EquipSlot" -> EquipSlot.fromTag(tag)
+                "ToolType" -> ToolType.fromTag(tag)
+                else -> throw RuntimeException("unknown tag type:$name")
+            }
+        }
+
+        fun readItemTrait(item: ItemStack) = readItemTrait(item.tag!!)
+
+        fun haveItemTrait(item : ItemStack): Boolean {
+            val tag = item.tag ?: return false
+            return tag.contains(COMPOUND_NAME)
+        }
+
+        fun removeTag(filterItem: ItemStack) {
+            val tag = filterItem.tag ?: return
+            tag.remove(COMPOUND_NAME)
+        }
     }
 }

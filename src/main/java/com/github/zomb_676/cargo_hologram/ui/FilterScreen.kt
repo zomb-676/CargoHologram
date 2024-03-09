@@ -1,15 +1,21 @@
 package com.github.zomb_676.cargo_hologram.ui
 
+import com.github.zomb_676.cargo_hologram.network.SetFilterPack
 import com.github.zomb_676.cargo_hologram.ui.component.BlurConfigure
+import com.github.zomb_676.cargo_hologram.ui.widget.CargoButton
+import com.github.zomb_676.cargo_hologram.ui.widget.CargoCheckBox
 import com.github.zomb_676.cargo_hologram.util.ARGBColor
+import com.github.zomb_676.cargo_hologram.util.assign
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
 import com.github.zomb_676.cargo_hologram.util.filter.ItemTrait
+import com.github.zomb_676.cargo_hologram.util.literal
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
 import net.minecraft.client.renderer.Rect2i
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.item.ItemStack
+import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sign
@@ -17,15 +23,29 @@ import kotlin.math.sign
 class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
     AbstractContainerScreen<FilterMenu>(menu, inv, component), CargoBlurScreen {
 
-    var hoverOnCandidate = false
-        private set
-    var mainArea: AreaImmute = AreaImmute.ofFullScreen()
+    private var hoverOnCandidate = false
+    private var mainArea: AreaImmute = AreaImmute.ofFullScreen()
     private var currentTopIndex = 0
+    private lateinit var modeCheckBox: CargoCheckBox
+    private lateinit var setButton: CargoButton
+    private lateinit var clearButton: CargoButton
+
+    private var traitIndex = -1
+    private var data: List<ItemTrait> = mutableListOf()
+    private var toSetTrait = -1
 
     override fun init() {
         super.init()
         topPos = min(20, (topPos * 0.6).toInt())
         mainArea = AreaImmute.ofRelative(leftPos, topPos, 176, 216).asAreaImmute()
+        modeCheckBox = CargoCheckBox.ofExplicit()
+        addRenderableWidget(modeCheckBox)
+        setButton = CargoButton.of(UIConstant.Paths.widgetNext)
+            .withListeners(::sendSetTraitPack)
+        addRenderableWidget(setButton)
+        clearButton = CargoButton.of(UIConstant.Paths.widgetRemove)
+            .withListeners { SetFilterPack(Optional.empty()).sendToServer() }
+        addRenderableWidget(clearButton)
     }
 
     override fun renderBg(pGuiGraphics: GuiGraphics, pPartialTick: Float, pMouseX: Int, pMouseY: Int) {
@@ -39,16 +59,20 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
         draw.outline(ARGBColor.Presets.WHITE)
         this.hoveredSlot = null
         this.hoverOnCandidate = false
+        this.traitIndex = -1
         menu.slots.forEach { slot ->
             val x = slot.x + leftPos
             val y = slot.y + topPos
             pGuiGraphics.renderOutline(x - 1, y - 1, 18, 18, ARGBColor.Presets.WHITE.color)
-            pGuiGraphics.renderItem(slot.item, x, y)
-            pGuiGraphics.renderItemDecorations(minecraft!!.font, slot.item, x, y)
+            if (!slot.item.isEmpty) {
+                pGuiGraphics.renderItem(slot.item, x, y)
+                pGuiGraphics.renderItemDecorations(minecraft!!.font, slot.item, x, y)
+            }
             if (this.isHovering(slot.x, slot.y, 16, 16, pMouseX.toDouble(), pMouseY.toDouble())) {
                 this.hoveredSlot = slot
                 pGuiGraphics.fill(x, y, x + 16, y + 16, ARGBColor.Presets.GREY.color)
-                pGuiGraphics.renderTooltip(minecraft!!.font, slot.item, pMouseX, pMouseY)
+                if (!slot.item.isEmpty)
+                    pGuiGraphics.renderTooltip(minecraft!!.font, slot.item, pMouseX, pMouseY)
             }
         }
         val carried = menu.carried
@@ -73,7 +97,6 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
         draw.downUp(80).inner(3)
         draw.outline(ARGBColor.Vanilla.WHITE)
         draw.inner(2)
-        val data: MutableList<Component>
         draw.assignUp(22).draw(pGuiGraphics) { draw ->
             draw.outline(ARGBColor.Vanilla.WHITE)
             draw.assignLeft(22)
@@ -105,13 +128,21 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
         draw.upDown((draw.height - showCount * (2 + 14)) / 2)
         repeat(min(showCount, dataCount)) { index ->
             draw.upDown(2).assignUp(14).draw(pGuiGraphics) { draw ->
+                if (draw.inRange(pMouseX, pMouseY)) {
+                    this.traitIndex = currentTopIndex + index
+                }
                 draw.outline(ARGBColor.Vanilla.WHITE)
+                if (this.toSetTrait == currentTopIndex + index) {
+                    draw.inner(2)
+                    draw.fill(ARGBColor.Vanilla.WHITE.alpha(0x55))
+                    draw.expand(2)
+                }
                 val current = data[currentTopIndex + index]
                 draw.assignLeft(16).draw(pGuiGraphics) { draw ->
                     draw.centeredString((currentTopIndex + index + 1).toString())
                 }
                 draw.innerX(2)
-                draw.scrollingString(current, ARGBColor.Presets.WHITE)
+                draw.scrollingString(current.description(candidate), ARGBColor.Presets.WHITE)
             }
         }
 
@@ -121,14 +152,47 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
             .rightLeft(2)
             .forDraw(pGuiGraphics)
         sideArea.assignUp(18).draw(pGuiGraphics) { draw ->
+            modeCheckBox.assign(draw.cursor)
             draw.outline(ARGBColor.Presets.WHITE)
-            draw.fillCargoWidget(UIConstant.Paths.checkboxChecked)
+            if (draw.inRange(pMouseX, pMouseY)) {
+                val tooltip = when (modeCheckBox.state) {
+                    CargoCheckBox.State.DEFAULT -> throw RuntimeException()
+                    CargoCheckBox.State.BANNED -> "BlackMode"
+                    CargoCheckBox.State.CHECKED -> "WhiteMode"
+                }.literal()
+                draw.tooltipComponent(pMouseX, pMouseY, tooltip)
+                draw.inner(2)
+                draw.fill(ARGBColor.Presets.WHITE.alpha(0x55))
+            }
+        }
+        sideArea.upDown(2).assignUp(18).draw(pGuiGraphics) { draw ->
+            setButton.assign(draw.cursor)
+            draw.outline(ARGBColor.Presets.WHITE)
+            if (draw.inRange(pMouseX, pMouseY)) {
+                draw.tooltipComponent(pMouseX, pMouseY, "Save".literal())
+                draw.inner(2)
+                draw.fill(ARGBColor.Presets.WHITE.alpha(0x55))
+            }
+        }
+
+        sideArea.upDown(2).assignUp(18).draw(pGuiGraphics) { draw ->
+            clearButton.assign(draw.cursor)
+            draw.outline(ARGBColor.Presets.WHITE)
+            if (draw.inRange(pMouseX, pMouseY)) {
+                draw.tooltipComponent(pMouseX, pMouseY, "Clear Set".literal())
+                draw.inner(2)
+                draw.fill(ARGBColor.Presets.WHITE.alpha(0x55))
+            }
+        }
+
+        for (renderable in this.renderables) {
+            renderable.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick)
         }
     }
 
-    private fun collectAvailableForItemStack(itemStack: ItemStack): MutableList<Component> {
+    private fun collectAvailableForItemStack(itemStack: ItemStack): List<ItemTrait> {
         val list = ItemTrait.collect(itemStack)
-        return list.values.toMutableList()
+        return list
     }
 
     override fun mouseScrolled(pMouseX: Double, pMouseY: Double, pDelta: Double): Boolean {
@@ -141,7 +205,16 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
         return Rect2i(leftPos + slot.x, topPos + slot.y, 16, 16)
     }
 
-    override fun onClose() {
-        super.onClose()
+    override fun mouseClicked(pMouseX: Double, pMouseY: Double, pButton: Int): Boolean {
+        if (traitIndex != -1) {
+            toSetTrait = traitIndex
+            return true
+        }
+        return super.mouseClicked(pMouseX, pMouseY, pButton)
+    }
+
+    private fun sendSetTraitPack() {
+        val trait = data.getOrNull(toSetTrait) ?: return
+        SetFilterPack(trait).sendToServer()
     }
 }

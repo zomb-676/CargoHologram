@@ -99,13 +99,13 @@ class GraphicCursor<T : Cursor<T>>(val cursor: Cursor<T>, private val guiGraphic
         }
     }
 
-    fun fill(
+    fun fillTexture(
         atlas: ResourceLocation,
         path: ResourceLocation,
         area: AreaImmute,
         color: ARGBColor = ARGBColor.Presets.WHITE,
     ) {
-        val atlasSprite = currentMinecraft().getTextureAtlas(atlas).apply(path)
+        val atlasSprite = AtlasHandle.query(atlas).getSprite(path)
         val minU = atlasSprite.u0
         val maxU = atlasSprite.u1
         val minV = atlasSprite.v0
@@ -116,23 +116,25 @@ class GraphicCursor<T : Cursor<T>>(val cursor: Cursor<T>, private val guiGraphic
         val b = color.blue()
         val alpha = color.alpha()
 
-        val z = 100.0f
+        val z = 300.0f
 
-        val minX = area.x1.toFloat()
-        val maxX = area.x2.toFloat()
-        val minY = area.y2.toFloat()
-        val maxY = area.y1.toFloat()
+        val pX1 = area.x1.toFloat()
+        val pX2 = area.x2.toFloat()
+        val pY1 = area.y1.toFloat()
+        val pY2 = area.y2.toFloat()
 
         RenderSystem.setShaderTexture(0, atlas)
-        RenderSystem.setShader(GameRenderer::getPositionColorShader)
+        RenderSystem.setShader(GameRenderer::getPositionColorTexShader)
         RenderSystem.enableBlend()
+        RenderSystem.defaultBlendFunc()
+        RenderSystem.disableDepthTest()
         val matrix = guiGraphics.pose().last().pose()
         val buffer = Tesselator.getInstance().builder
         buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX)
-        buffer.vertex(matrix, minX, minY, z).color(r, g, b, alpha).uv(minU, minV).endVertex()
-        buffer.vertex(matrix, minX, maxY, z).color(r, g, b, alpha).uv(minU, maxV).endVertex()
-        buffer.vertex(matrix, maxX, maxY, z).color(r, g, b, alpha).uv(maxU, maxV).endVertex()
-        buffer.vertex(matrix, maxX, minY, z).color(r, g, b, alpha).uv(maxU, minV).endVertex()
+        buffer.vertex(matrix, pX1, pY1, z).color(r,g,b,alpha).uv(minU, minV).endVertex()
+        buffer.vertex(matrix, pX1, pY2, z).color(r,g,b,alpha).uv(minU, maxV).endVertex()
+        buffer.vertex(matrix, pX2, pY2, z).color(r,g,b,alpha).uv(maxU, maxV).endVertex()
+        buffer.vertex(matrix, pX2, pY1, z).color(r,g,b,alpha).uv(maxU, minV).endVertex()
         BufferUploader.drawWithShader(buffer.end())
         RenderSystem.disableBlend()
     }
@@ -142,7 +144,7 @@ class GraphicCursor<T : Cursor<T>>(val cursor: Cursor<T>, private val guiGraphic
         path: ResourceLocation,
         color: ARGBColor = ARGBColor.Presets.WHITE,
     ) {
-        fill(atlas, path, this.cursor, color)
+        fillTexture(atlas, path, this.cursor, color)
     }
 
     fun fillNoStretch(
@@ -150,9 +152,9 @@ class GraphicCursor<T : Cursor<T>>(val cursor: Cursor<T>, private val guiGraphic
         path: ResourceLocation,
         color: ARGBColor = ARGBColor.Presets.WHITE,
     ) {
-        val sprite = currentMinecraft().getTextureAtlas(atlas).apply(path)
+        val sprite = AtlasHandle.query(atlas).getSprite(path)
         val area = AreaImmute.ofAbsolute(sprite.x, sprite.y, sprite.contents().width(), sprite.contents().height())
-        fill(atlas, path, area, color)
+        fillTexture(atlas, path, area, color)
     }
 
     /**
@@ -198,6 +200,9 @@ class GraphicCursor<T : Cursor<T>>(val cursor: Cursor<T>, private val guiGraphic
     fun inItemRange(posX: Int, posY: Int) =
         posX >= x1 + modifyX - ADDITION_ITEM_PADDING && posX <= x1 + modifyX + ITEM_SPAN + ADDITION_ITEM_PADDING
                 && posY >= y1 + modifyY - ADDITION_ITEM_PADDING && posY <= y1 + modifyY + ITEM_SPAN + ADDITION_ITEM_PADDING
+
+    fun inRange(mouseX : Int, mouseY : Int) = mouseX >= x1 && mouseX <= x2 && mouseY >= y1 && mouseY <= y2
+
 
     fun itemArea() = AreaImmute.ofRelative(
         x1 + modifyX - ADDITION_ITEM_PADDING,

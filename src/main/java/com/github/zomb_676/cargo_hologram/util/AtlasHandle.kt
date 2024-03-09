@@ -5,12 +5,17 @@ import net.minecraft.client.renderer.texture.TextureAtlas
 import net.minecraft.resources.ResourceLocation
 
 object AtlasHandle {
-    private var queryMap: Map<ResourceLocation, TextureAtlas> = mapOf()
+    private val queryMap: MutableMap<ResourceLocation, TextureAtlas> = mutableMapOf()
 
     @JvmStatic
     fun updateQueryMap(byPath: Map<ResourceLocation, AbstractTexture>) {
-        byPath.toMap().filterValues { it is TextureAtlas }
+        queryMap.clear()
+        for ((path, texture) in byPath) {
+            if (texture is TextureAtlas) {
+                queryMap[path] = texture
+            }
+        }
     }
 
-    fun query(atlas: ResourceLocation) = queryMap[atlas]
+    fun query(atlas: ResourceLocation) = queryMap[atlas]!!
 }

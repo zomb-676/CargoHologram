@@ -1,15 +1,12 @@
-package com.github.zomb_676.cargo_hologram.ui.component
+package com.github.zomb_676.cargo_hologram.ui.widget
 
 import com.github.zomb_676.cargo_hologram.util.ARGBColor
 import com.github.zomb_676.cargo_hologram.util.currentMcFont
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.network.chat.Component
-import net.minecraft.util.Mth
 import net.minecraftforge.client.gui.widget.ForgeSlider
 import java.util.function.DoubleConsumer
-import java.util.function.IntConsumer
-import java.util.function.IntPredicate
 
 class CargoSlider(
     prefix: Component, suffix: Component, min: Double, max: Double, initial: Double, step: Double,

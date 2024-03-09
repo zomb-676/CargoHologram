@@ -1,6 +1,8 @@
 package com.github.zomb_676.cargo_hologram.ui.component
 
 import com.github.zomb_676.cargo_hologram.Config
+import com.github.zomb_676.cargo_hologram.ui.widget.CargoCheckBox
+import com.github.zomb_676.cargo_hologram.ui.widget.CargoSlider
 import com.github.zomb_676.cargo_hologram.util.ARGBColor
 import com.github.zomb_676.cargo_hologram.util.BlurHandle
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
@@ -10,6 +12,7 @@ object BlurConfigure {
     var blurRadius: Float = 20.0F
     var blurExpandY: Int = 10
     var blurBgAlpha: Int = 0x7f
+    var blurOutline: Boolean = true
 
     fun render(guiGraphics: GuiGraphics, mainArea: AreaImmute) {
         BlurHandle.blur()
@@ -23,7 +26,7 @@ object BlurConfigure {
                 ).color
             )
         }
-        if (true) {
+        if (blurOutline) {
             val boundaryColor = ARGBColor.Vanilla.BLACK.halfAlpha().color
             guiGraphics.hLine(blurArea.left, blurArea.right, blurArea.up, boundaryColor)
             guiGraphics.hLine(blurArea.left, blurArea.right, blurArea.down - 1, boundaryColor)
@@ -38,6 +41,10 @@ object BlurConfigure {
 
     fun alphaSlider() = CargoSlider.ofRange(0, 0xff, blurBgAlpha)
         .withValueListener { alpha -> blurBgAlpha = alpha.toInt() }
+
+    fun outlineCheckBox() = CargoCheckBox
+        .ofExplicit(if (blurOutline) CargoCheckBox.State.CHECKED else CargoCheckBox.State.BANNED)
+        .withListener { state -> blurOutline = state.value }
 
     fun onClose() {
         Config.Client.saveBlurConfigure()

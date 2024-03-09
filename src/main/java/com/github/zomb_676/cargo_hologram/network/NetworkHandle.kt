@@ -31,7 +31,7 @@ object NetworkHandle {
         channel.send(packetTarget, packet)
 
     @Suppress("INACCESSIBLE_TYPE")
-    private fun <T> register(entry: MessageEntry<T>) {
+    private fun <T> registerEntry(entry: MessageEntry<T>) {
         channel.registerMessage(
             entry.index, entry.type, entry::encode, entry::decode, entry::handle, entry.direction().optional()
         )
@@ -51,7 +51,7 @@ object NetworkHandle {
         crossinline decodeFunction: (FriendlyByteBuf) -> T,
         direction: NetworkDirection? = null,
     ) {
-        register(object : MessageEntry<T>(T::class.java) {
+        registerEntry(object : MessageEntry<T>(T::class.java) {
             override fun encode(instance: T, buf: FriendlyByteBuf) {
                 instance.encode(buf)
                 if (buf.readerIndex() != 0) {
@@ -111,5 +111,6 @@ object NetworkHandle {
         register(ResponsePack::decode, NetworkDirection.PLAY_TO_CLIENT)
         register(TransformRecipePack::decode, NetworkDirection.PLAY_TO_SERVER)
         register(SetSlotPacket::decode, NetworkDirection.PLAY_TO_SERVER)
+        register(SetFilterPack::decode, NetworkDirection.PLAY_TO_SERVER)
     }
 }

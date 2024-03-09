@@ -121,9 +121,11 @@ data object Config : BusSubscribe {
         private val BLUR_RADIUS = BUILDER.push("blur_style")
             .defineInRange("blur_radius", 20.0, 0.1, 100.0)
         private val BLUR_EXPAND_Y = BUILDER
-            .defineInRange("blur_expand_y", 10,0, Int.MAX_VALUE)
+            .defineInRange("blur_expand_y", 10, 0, Int.MAX_VALUE)
         private val BLUR_BG_ALPHA = BUILDER
-            .defineInRange("blur_bg_alpha",0x7f,0,0xff)
+            .defineInRange("blur_bg_alpha", 0x7f, 0, 0xff)
+        private val BLUR_OUTLINE = BUILDER
+            .define("blur_outline", true)
         private val next = BUILDER.pop()
 
         private val SPEC: ForgeConfigSpec = BUILDER.build()
@@ -141,12 +143,14 @@ data object Config : BusSubscribe {
             BlurConfigure.blurRadius = BLUR_RADIUS.get().toFloat()
             BlurConfigure.blurExpandY = BLUR_EXPAND_Y.get()
             BlurConfigure.blurBgAlpha = BLUR_BG_ALPHA.get()
+            BlurConfigure.blurOutline = BLUR_OUTLINE.get()
         }
 
         fun saveBlurConfigure() {
             BLUR_RADIUS.set(BlurConfigure.blurRadius.toDouble())
             BLUR_EXPAND_Y.set(BlurConfigure.blurExpandY)
             BLUR_BG_ALPHA.set(BlurConfigure.blurBgAlpha)
+            BLUR_OUTLINE.set(BlurConfigure.blurOutline)
         }
     }
 

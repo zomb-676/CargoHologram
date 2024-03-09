@@ -182,3 +182,6 @@ fun <T> T.location(registries: IForgeRegistry<T>) = registries.getKey(this)!!
 
 operator fun MutableComponent.plus(component: Component): MutableComponent = this.append(component)
 operator fun String.plus(component: Component): MutableComponent = this.literal().append(component)
+
+fun AbstractWidget.isIn(mouseX : Double, mouseY : Double) =
+    mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height

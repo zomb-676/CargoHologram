@@ -22,7 +22,7 @@ import java.util.concurrent.Executor;
 public class TextureManagerMixin {
     @Shadow @Final private Map<ResourceLocation, AbstractTexture> byPath;
 
-    @Inject(method = "reload", at = @At("HEAD"))
+    @Inject(method = "reload", at = @At("TAIL"))
     private void inject(PreparableReloadListener.PreparationBarrier pStage, ResourceManager pResourceManager, ProfilerFiller pPreparationsProfiler, ProfilerFiller pReloadProfiler, Executor pBackgroundExecutor, Executor pGameExecutor, CallbackInfoReturnable<CompletableFuture<Void>> cir) {
         AtlasHandle.updateQueryMap(byPath);
     }

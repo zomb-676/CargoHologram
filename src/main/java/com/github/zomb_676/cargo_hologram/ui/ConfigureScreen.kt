@@ -1,7 +1,8 @@
 package com.github.zomb_676.cargo_hologram.ui
 
 import com.github.zomb_676.cargo_hologram.ui.component.BlurConfigure
-import com.github.zomb_676.cargo_hologram.ui.component.CargoSlider
+import com.github.zomb_676.cargo_hologram.ui.widget.CargoCheckBox
+import com.github.zomb_676.cargo_hologram.ui.widget.CargoSlider
 import com.github.zomb_676.cargo_hologram.util.ARGBColor
 import com.github.zomb_676.cargo_hologram.util.assign
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
@@ -15,6 +16,7 @@ class ConfigureScreen : Screen("Configure".literal()), CargoBlurScreen {
     lateinit var blurSlider: CargoSlider
     lateinit var blurExpandSlider: CargoSlider
     lateinit var blurBgAlpha: CargoSlider
+    lateinit var blurOutline : CargoCheckBox
 
     override fun init() {
         mainArea = AreaImmute.ofFullScreen().asBaseCursor()
@@ -22,9 +24,11 @@ class ConfigureScreen : Screen("Configure".literal()), CargoBlurScreen {
         blurSlider = BlurConfigure.radiusSlider()
         blurExpandSlider = BlurConfigure.expandSlider(mainArea)
         blurBgAlpha = BlurConfigure.alphaSlider()
+        blurOutline = BlurConfigure.outlineCheckBox()
         addRenderableWidget(blurSlider)
         addRenderableWidget(blurExpandSlider)
         addRenderableWidget(blurBgAlpha)
+        addRenderableWidget(blurOutline)
     }
 
     @Suppress("NAME_SHADOWING")
@@ -48,6 +52,11 @@ class ConfigureScreen : Screen("Configure".literal()), CargoBlurScreen {
             draw.string("blur bg alpha")
             draw.assignRight(120, blurBgAlpha::assign)
         }
+        draw.upDown(3)
+        draw.assignUp(15).draw(pGuiGraphics) { draw ->
+            draw.string("blur bg alpha")
+            draw.assignRight(15, blurOutline::assign)
+        }
         super.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick)
     }
 
@@ -55,4 +64,6 @@ class ConfigureScreen : Screen("Configure".literal()), CargoBlurScreen {
         BlurConfigure.onClose()
         super.onClose()
     }
+
+    override fun isPauseScreen(): Boolean = false
 }
