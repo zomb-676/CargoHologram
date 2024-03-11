@@ -7,6 +7,7 @@ import com.github.zomb_676.cargo_hologram.ui.widget.CargoCheckBox
 import com.github.zomb_676.cargo_hologram.util.ARGBColor
 import com.github.zomb_676.cargo_hologram.util.assign
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
+import com.github.zomb_676.cargo_hologram.util.fillRelative
 import com.github.zomb_676.cargo_hologram.util.filter.ItemTrait
 import com.github.zomb_676.cargo_hologram.util.literal
 import net.minecraft.client.gui.GuiGraphics
@@ -63,14 +64,14 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
         menu.slots.forEach { slot ->
             val x = slot.x + leftPos
             val y = slot.y + topPos
-            pGuiGraphics.renderOutline(x - 1, y - 1, 18, 18, ARGBColor.Presets.WHITE.color)
+            pGuiGraphics.fillRelative(x - 1, y - 1, 18, 18, ARGBColor.Presets.GREY.alpha(0x5f))
             if (!slot.item.isEmpty) {
                 pGuiGraphics.renderItem(slot.item, x, y)
                 pGuiGraphics.renderItemDecorations(minecraft!!.font, slot.item, x, y)
             }
             if (this.isHovering(slot.x, slot.y, 16, 16, pMouseX.toDouble(), pMouseY.toDouble())) {
                 this.hoveredSlot = slot
-                pGuiGraphics.fill(x, y, x + 16, y + 16, ARGBColor.Presets.GREY.color)
+                pGuiGraphics.fillRelative(x - 1, y - 1, 18, 18, ARGBColor.Presets.GREY)
                 if (!slot.item.isEmpty)
                     pGuiGraphics.renderTooltip(minecraft!!.font, slot.item, pMouseX, pMouseY)
             }

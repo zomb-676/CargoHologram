@@ -15,6 +15,7 @@ import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.inventory.AbstractContainerMenu
 import net.minecraft.world.inventory.ClickAction
+import net.minecraft.world.inventory.ClickType
 import net.minecraft.world.inventory.Slot
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.crafting.RecipeType
@@ -32,15 +33,13 @@ class CraftMenu(containerId: Int, val playerInv: Inventory) :
     val materialSlots = Array(9) { index ->
         val x = index % 3
         val y = index / 3
-        SlotItemHandler(materialHandle, index, 4 + x * 19 + 19 * 9 + 5, 136 + y * 19)
+        SlotItemHandler(materialHandle, index, 4 + x * 19 + 19 * 9 + 2, 136 + y * 19)
     }
-    val resultSlot = SlotItemHandler(resultHandle, 0, 4 + 1 * 19 + 19 * 9 + 5, 136 + 3 * 19 + 2)
+    val resultSlot = SlotItemHandler(resultHandle, 0, 4 + 1 * 19 + 19 * 9 + 2, 136 + 3 * 19 + 2)
     private val craftContainer = WrappedCraftContainer(materialHandle, 3, 3)
 
 
     override fun quickMoveStack(pPlayer: Player, pIndex: Int): ItemStack = ItemStack.EMPTY
-
-    override fun stillValid(pPlayer: Player): Boolean = true
 
     init {
         materialSlots.forEach(this::addSlot)
@@ -125,7 +124,16 @@ class CraftMenu(containerId: Int, val playerInv: Inventory) :
     }
 
     fun requestCraft(): Boolean {
-        val toSearch = materialSlots.filter { !it.item.isEmpty }.map { it.item.copy() }.toMutableList()
+        val toSearch = mutableListOf<ItemStack>()
+        materialSlots.forEach { m ->
+            if (m.item.isEmpty) return@forEach
+            val firstOrNull = toSearch.firstOrNull { it.`is`(m.item.item) }
+            if (firstOrNull == null) {
+                toSearch.add(m.item.copy())
+            } else {
+                firstOrNull.grow(m.item.count)
+            }
+        }
         val consumed = mutableListOf<ItemStack>()
 
         val player = playerInv.player
@@ -184,7 +192,7 @@ class CraftMenu(containerId: Int, val playerInv: Inventory) :
             }
             true
         }
-        if (!success) {
+        if (!success || toSearch.isNotEmpty()) {
             consumed.forEach(player::addItem)
         }
 
@@ -197,4 +205,12 @@ class CraftMenu(containerId: Int, val playerInv: Inventory) :
             QueryCenter.stopPlayer(pPlayer.uuid)
         }
     }
+
+    override fun clicked(pSlotId: Int, pButton: Int, pClickType: ClickType, pPlayer: Player) {
+        if (pSlotId == playerInv.selected + 37 && pClickType != ClickType.THROW) return
+        super.clicked(pSlotId, pButton, pClickType, pPlayer)
+    }
+
+    override fun stillValid(pPlayer: Player): Boolean = true
+//        playerInv.getSelected().`is`(AllRegisters.Items.crafter.get())
 }

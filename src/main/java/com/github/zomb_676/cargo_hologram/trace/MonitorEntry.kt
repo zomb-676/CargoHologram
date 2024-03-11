@@ -3,15 +3,16 @@ package com.github.zomb_676.cargo_hologram.trace
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.ChunkPos
+import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.chunk.LevelChunk
 
 /**
  * search
  */
-class MonitorEntry {
+class MonitorEntry(val level: Level,val chunkPos: ChunkPos) {
 
-    private val requirement: MonitorRequirement = MonitorRequirement()
+    private val requirement: MonitorRequirement = MonitorRequirement(chunkPos)
     var result: MonitorRawResult? = null
 
     fun cleanResult() {

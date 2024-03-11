@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "cargo_hologram:block/remote_craft_table"
+    }
+  }
+}

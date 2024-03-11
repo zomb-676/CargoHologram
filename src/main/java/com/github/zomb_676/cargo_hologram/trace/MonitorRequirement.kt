@@ -9,12 +9,16 @@ import java.util.function.IntPredicate
 /**
  *  one [MonitorRequirement] pair to one chunk in a level and multi [QuerySource]
  */
-class MonitorRequirement(private val sources: MutableList<QuerySource> = mutableListOf()) {
+class MonitorRequirement(val chunkPos: ChunkPos) {
+
+    private val sources: MutableList<QuerySource> = mutableListOf()
 
     private var forceCount: Int = 0
+    private var fullChunkCount : Int = 0
     private val map: MutableMap<BlockEntityType<*>, IntPredicate> = mutableMapOf()
 
     fun force(): Boolean = forceCount > 0
+    fun fullChunk() : Boolean = fullChunkCount > 0
 
     fun filterBlockEntity(blockEntity: BlockEntity): Boolean = sources.any { it.filter(blockEntity) }
 
@@ -31,7 +35,7 @@ class MonitorRequirement(private val sources: MutableList<QuerySource> = mutable
         sources.add(querySource)
         val requirement = querySource.requirement()
         requirement.selector.forEach { selector ->
-            val before = map.put(selector.type, selector)
+//            val before = map.put(selector.type, selector)
             //TODO
         }
         if (requirement.force) {
@@ -58,7 +62,8 @@ class MonitorRequirement(private val sources: MutableList<QuerySource> = mutable
             val source = iter.next()
             if (source.valid()) continue
             source.onRemove()
-            forceCount--
+            if (source.requirement().force) this.forceCount--
+            if (source.fullChunk()) this.fullChunkCount--
         }
         return sources.isNotEmpty()
     }

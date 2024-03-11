@@ -1,5 +1,6 @@
 package com.github.zomb_676.cargo_hologram
 
+import com.github.zomb_676.cargo_hologram.trace.GlobalFilter
 import com.github.zomb_676.cargo_hologram.ui.ConfigureScreen
 import com.github.zomb_676.cargo_hologram.ui.DebugHud
 import com.github.zomb_676.cargo_hologram.util.BusSubscribe
@@ -12,16 +13,16 @@ import net.minecraftforge.registries.ForgeRegistries
 object AllCommands : BusSubscribe {
     override fun registerEvent(dispatcher: Dispatcher) = dispatcher.registerCommand {
         CargoHologram.MOD_ID {
-            "global_selectors" {
+            "global_settings" {
                 execute {
-                    val filter = Config.Server.globalFilter
-                    source.sendSystemMessage("mode:${filter.mode}".literal())
-                    filter.selectors.forEach { selector ->
+                    source.sendSystemMessage("mode:${GlobalFilter.globalListMode}".literal())
+                    GlobalFilter.globalSelectors.forEach { selector ->
                         source.sendSystemMessage("type:${ForgeRegistries.BLOCK_ENTITY_TYPES.getKey(selector.type)!!}".literal())
                         if (selector.slotSelectors.isNotEmpty()) {
                             source.sendSystemMessage("selector:${selector.slotSelectors.joinToString(",")}".literal())
                         }
                     }
+                    source.sendSystemMessage("allow lootChest:${GlobalFilter.allowLootChest}".literal())
                 }
             }
             "debug_overlay" {

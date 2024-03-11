@@ -6,6 +6,7 @@ import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.inventory.AbstractContainerMenu
 import net.minecraft.world.inventory.ClickAction
+import net.minecraft.world.inventory.ClickType
 import net.minecraft.world.inventory.Slot
 import net.minecraft.world.item.ItemStack
 import net.minecraftforge.items.ItemStackHandler
@@ -26,11 +27,9 @@ class FilterMenu(containerId: Int, val playerInv: Inventory) :
         }
         val slotItem = slot.item
         if (slotItem.isEmpty) return ItemStack.EMPTY
-        candidateSlot.set(slotItem)
+        candidateSlot.set(slotItem.copyWithCount(1))
         return ItemStack.EMPTY
     }
-
-    override fun stillValid(pPlayer: Player): Boolean = true
 
     init {
         createInventorySlots(playerInv)
@@ -68,8 +67,10 @@ class FilterMenu(containerId: Int, val playerInv: Inventory) :
         return true
     }
 
-    override fun removed(pPlayer: Player) {
-        super.removed(pPlayer)
-        if (pPlayer.level().isClientSide) return
+    override fun clicked(pSlotId: Int, pButton: Int, pClickType: ClickType, pPlayer: Player) {
+        if (pSlotId == playerInv.selected + 27 && pClickType != ClickType.THROW) return
+        super.clicked(pSlotId, pButton, pClickType, pPlayer)
     }
+
+    override fun stillValid(pPlayer: Player): Boolean = playerInv.getSelected() == filterItem
 }

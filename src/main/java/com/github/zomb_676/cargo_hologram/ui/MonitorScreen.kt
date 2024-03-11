@@ -10,8 +10,8 @@ import com.github.zomb_676.cargo_hologram.ui.component.ItemComponent
 import com.github.zomb_676.cargo_hologram.util.*
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
 import com.github.zomb_676.cargo_hologram.util.interact.InteractHelper
+import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.gui.components.CycleButton
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.core.BlockPos
 import java.util.*
@@ -26,29 +26,17 @@ class MonitorScreen : Screen("monitor".literal()), CargoBlurScreen {
 
     var mainArea: AreaImmute = cursor
         private set
-    lateinit var sortButton: CycleButton<SortType>
     var hovered: Pair<BlockPos, SlotItemStack>? = null
 
     init {
         PlayerCenteredQueryRequestPack(
-            currentClientPlayer().uuid,
-            2,
-            QueryRequirement(force = false, crossDimension = false)
+            currentClientPlayer().uuid, 2, QueryRequirement(force = false, crossDimension = false)
         ).sendToServer()
     }
 
     override fun init() {
         cursor = AreaImmute.ofSize(width, height).asBaseCursor()
-        mainArea = cursor.percentX(0.6).percentY(0.8).asAreaImmute()
-        sortButton = CycleButton.builder<SortType> {
-            it.name.lowercase().literal()
-        }.withInitialValue(SortType.IGNORE_CONTAINER)
-            .withValues(SortType.entries)
-            .displayOnlyValue()
-            .create(0, 0, 100, 100, "".literal()) { button, sortType ->
-
-            }
-        addRenderableWidget(sortButton)
+        mainArea = cursor.percentX(0.4).percentY(0.8).asAreaImmute()
     }
 
     @Suppress("NAME_SHADOWING")
@@ -56,14 +44,6 @@ class MonitorScreen : Screen("monitor".literal()), CargoBlurScreen {
         BlurConfigure.render(pGuiGraphics, mainArea)
         hovered = null
         val draw = mainArea.asBaseCursor().forDraw(pGuiGraphics)
-        draw.outline(ARGBColor.Presets.WHITE)
-        draw.inner(3)
-        draw.assignUp(25).draw(pGuiGraphics) { draw ->
-            draw.outline(ARGBColor.Presets.WHITE)
-            draw.inner(3)
-            draw.assignLeft(100, sortButton::assign)
-        }
-        draw.innerY(3)
         draw.outline(ARGBColor.Presets.WHITE)
 
         val sliderArea = draw.assignRight(10)
@@ -117,8 +97,7 @@ class MonitorScreen : Screen("monitor".literal()), CargoBlurScreen {
                             draw.tooltipComponent(
                                 pMouseX,
                                 pMouseY,
-                                item.gatherTooltip()
-                                    .append("slot:$slot".literal())
+                                item.gatherTooltip().append("slot:$slot".literal())
                                     .append("located:(x:${pos.x},y:${pos.y},z:${pos.z})".literal()),
                                 ItemComponent(block)
                             )
@@ -129,6 +108,11 @@ class MonitorScreen : Screen("monitor".literal()), CargoBlurScreen {
                 }
             }
         }
+
+        val side = mainArea.asBaseCursor().apply { rightLeft(width) }
+            .moveLeft(2).leftLeft(16).forDraw(pGuiGraphics)
+        side.outline(ARGBColor.Presets.WHITE)
+
         super.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick)
     }
 
@@ -137,11 +121,7 @@ class MonitorScreen : Screen("monitor".literal()), CargoBlurScreen {
             val shiftDown = InteractHelper.currentModifiers().isShiftDown
             val takeCount = if (shiftDown) slotItem.itemStack.count else 1
             RequestRemoteTake(
-                takeCount,
-                slotItem,
-                pos,
-                currentClientPlayer().level().dimension(),
-                UUID.randomUUID()
+                takeCount, slotItem, pos, currentClientPlayer().level().dimension(), UUID.randomUUID()
             ).sendToServer()
             return true
         }
@@ -159,5 +139,14 @@ class MonitorScreen : Screen("monitor".literal()), CargoBlurScreen {
     override fun mouseScrolled(pMouseX: Double, pMouseY: Double, pDelta: Double): Boolean {
         currentRowIndex -= pDelta.toInt().sign
         return super.mouseScrolled(pMouseX, pMouseY, pDelta)
+    }
+
+    override fun keyReleased(pKeyCode: Int, pScanCode: Int, pModifiers: Int): Boolean {
+        val key = InputConstants.getKey(pKeyCode, pScanCode)
+        if (minecraft!!.options.keyInventory.isActiveAndMatches(key)) {
+            this.onClose()
+            return true
+        }
+        return super.keyReleased(pKeyCode, pScanCode, pModifiers)
     }
 }

@@ -1,6 +1,7 @@
 package com.github.zomb_676.cargo_hologram.data
 
 import com.github.zomb_676.cargo_hologram.AllRegisters
+import com.github.zomb_676.cargo_hologram.AllTranslates
 import com.github.zomb_676.cargo_hologram.CargoHologram
 import com.github.zomb_676.cargo_hologram.util.BusSubscribe
 import com.github.zomb_676.cargo_hologram.util.Dispatcher
@@ -9,6 +10,10 @@ import net.minecraft.network.chat.contents.TranslatableContents
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.Items
+import net.minecraft.world.level.block.Block
+import net.minecraft.world.level.block.Blocks
+import net.minecraftforge.client.model.generators.BlockModelProvider
+import net.minecraftforge.client.model.generators.BlockStateProvider
 import net.minecraftforge.client.model.generators.ItemModelProvider
 import net.minecraftforge.client.model.generators.ModelFile
 import net.minecraftforge.common.data.LanguageProvider
@@ -20,12 +25,14 @@ import net.minecraftforge.registries.RegistryObject
 object CargoHologramDataGenerator : BusSubscribe {
     override fun registerEvent(dispatcher: Dispatcher) {
         dispatcher<GatherDataEvent> { event ->
-            event.generator.addProvider(event.includeClient(), ModelProvider(event))
+            event.generator.addProvider(event.includeClient(), CargoItemModelProvider(event))
+            event.generator.addProvider(event.includeClient(), CargoBlockModelProvider(event))
             event.generator.addProvider(event.includeClient(), EnglishLangProvider(event))
+            event.generator.addProvider(event.includeClient(), CargoBlockStateProvider(event))
         }
     }
 
-    class ModelProvider(event: GatherDataEvent) :
+    class CargoItemModelProvider(event: GatherDataEvent) :
         ItemModelProvider(event.generator.packOutput, CargoHologram.MOD_ID, event.existingFileHelper) {
         companion object {
             val GENERATED: ResourceLocation = ResourceLocation("item/generated")
@@ -40,13 +47,14 @@ object CargoHologramDataGenerator : BusSubscribe {
                 glasses.useItemModel(Items.DIAMOND)
                 itemFilter.useItemModel(Items.NAME_TAG)
                 configureUISTick.useItemModel(Items.DEBUG_STICK)
+                remoteCraftTableItem.useItemModel(Items.CRAFTING_TABLE)
             }
         }
 
         private fun RegistryObject<out Item>.useItemModel(item: Item) {
             val location = ForgeRegistries.ITEMS.getKey(this.get())!!
             val useItemLocation = ForgeRegistries.ITEMS.getKey(item)!!
-            val parentModelLocation = useItemLocation.withPath("item/${useItemLocation.path}")
+            val parentModelLocation = useItemLocation.withPrefix("item/")
             val parentModelFile = ModelFile.ExistingModelFile(parentModelLocation, existingFileHelper)
             getBuilder(location.toString())
                 .parent(parentModelFile)
@@ -67,6 +75,44 @@ object CargoHologramDataGenerator : BusSubscribe {
         private fun RegistryObject<out Item>.singleTextureItem() {
             basicItem(this.get())
         }
+
+
+    }
+
+    class CargoBlockModelProvider(event: GatherDataEvent) :
+        BlockModelProvider(event.generator.packOutput, CargoHologram.MOD_ID, event.existingFileHelper) {
+        override fun registerModels() {
+            AllRegisters.Blocks.apply {
+                remoteCraftTable.useBlockModel(Blocks.CRAFTING_TABLE)
+            }
+        }
+
+        private fun RegistryObject<out Block>.useBlockModel(block: Block) {
+            val location = ForgeRegistries.BLOCKS.getKey(this.get())!!
+            val useBlockLocation = ForgeRegistries.BLOCKS.getKey(block)!!
+            val parentModelLocation = useBlockLocation.withPrefix("block/")
+            val parentModelFile = ModelFile.ExistingModelFile(parentModelLocation, existingFileHelper)
+            getBuilder(location.toString())
+                .parent(parentModelFile)
+        }
+
+    }
+
+    class CargoBlockStateProvider(event: GatherDataEvent) :
+        BlockStateProvider(event.generator.packOutput, CargoHologram.MOD_ID, event.existingFileHelper) {
+        override fun registerStatesAndModels() {
+            AllRegisters.Blocks.apply {
+                remoteCraftTable.selfSingleState()
+            }
+        }
+
+        private fun RegistryObject<out Block>.selfSingleState() {
+            val location = ForgeRegistries.BLOCKS.getKey(this.get())!!
+            val modelLocation = location.withPrefix("block/")
+            val modelFile = models().getExistingFile(modelLocation)
+            simpleBlock(this.get(), modelFile)
+        }
+
     }
 
     class EnglishLangProvider(event: GatherDataEvent) :
@@ -80,11 +126,23 @@ object CargoHologramDataGenerator : BusSubscribe {
                 itemFilter.lang("Item Filter")
                 configureUISTick.lang("Configure UI stick")
             }
-            AllRegisters.tabName.lang(CargoHologram.MOD_NAME)
+            AllRegisters.Blocks.apply {
+                remoteCraftTable.lang("RemoteCraftTable")
+            }
+            AllTranslates.apply {
+                MOD_TAB.lang(CargoHologram.MOD_NAME)
+                CONFIGURE_UI_TIP.lang("use command or Configure UI stick to configure")
+            }
         }
 
+        @JvmName("langForItem")
         private fun RegistryObject<out Item>.lang(trans: String) {
             addItem(this, trans)
+        }
+
+        @JvmName("lang for Block")
+        private fun RegistryObject<out Block>.lang(trans: String) {
+            addBlock(this, trans)
         }
 
         private fun MutableComponent.lang(trans: String) {

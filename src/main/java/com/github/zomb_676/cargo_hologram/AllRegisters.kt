@@ -7,11 +7,12 @@ import com.github.zomb_676.cargo_hologram.ui.CraftMenu
 import com.github.zomb_676.cargo_hologram.ui.FilterMenu
 import com.github.zomb_676.cargo_hologram.util.*
 import net.minecraft.core.registries.Registries
-import net.minecraft.network.chat.MutableComponent
 import net.minecraft.world.flag.FeatureFlags
 import net.minecraft.world.inventory.MenuType
+import net.minecraft.world.item.BlockItem
 import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item
+import net.minecraft.world.item.ItemFrameItem
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.Block
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent
@@ -36,12 +37,12 @@ object AllRegisters : BusSubscribe {
         }
         //manually init class
         Items.monitor
+        Blocks.remoteCraftTable
     }
 
-    val tabName: MutableComponent = "itemGroup.$MOD_ID.items".translate()
     val CREATIVE_TAB: RegistryObject<CreativeModeTab> = TAB.register("cargo") {
         CreativeModeTab.builder()
-            .title(tabName)
+            .title(AllTranslates.MOD_TAB)
             .icon { ItemStack(MinecraftItems.DIAMOND) }
             .build()
     }
@@ -54,6 +55,10 @@ object AllRegisters : BusSubscribe {
     }
 
 
+    object Blocks {
+        val remoteCraftTable = BLOCK.register("remote_craft_table") { RemoteCraftTable() }
+    }
+
     object Items {
         val monitor: RegistryObject<CargoMonitor> = ITEM.register("monitor") { CargoMonitor() }
         val crafter: RegistryObject<CraftPanel> = ITEM.register("craft_panel") { CraftPanel() }
@@ -62,6 +67,9 @@ object AllRegisters : BusSubscribe {
         val itemFilter: RegistryObject<ItemFilter> = ITEM.register("filter_item") { ItemFilter() }
         val configureUISTick: RegistryObject<Item> =
             ITEM.register("configure_ui_sitck") { UIConfigureItem(::ConfigureScreen) }
+        val remoteCraftTableItem = ITEM.register("remote_craft_table") {
+            BlockItem(Blocks.remoteCraftTable.get(), Item.Properties())
+        }
     }
 
 }

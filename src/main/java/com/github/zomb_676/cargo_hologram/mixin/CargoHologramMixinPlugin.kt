@@ -13,9 +13,9 @@ class CargoHologramMixinPlugin : IMixinConfigPlugin {
     override fun shouldApplyMixin(targetClassName: String, mixinClassName: String): Boolean = true
 
     override fun acceptTargets(myTargets: MutableSet<String>, otherTargets: Set<String>) {
-        if (FMLLoader.getLoadingModList().getModFileById("modernui") != null) {
-            myTargets += "com.github.zomb_676.cargo_hologram.mixin.compact.ModernUIBlurHandleMixin"
-        }
+//        if (FMLLoader.getLoadingModList().getModFileById("modernui") != null) {
+//            myTargets += "com.github.zomb_676.cargo_hologram.mixin.compact.ModernUIBlurHandleMixin"
+//        }
     }
 
     override fun getMixins(): MutableList<String>? = null

@@ -4,14 +4,13 @@
   "package": "com.github.zomb_676.cargo_hologram.mixin",
   "plugin": "com.github.zomb_676.cargo_hologram.mixin.CargoHologramMixinPlugin",
   "compatibilityLevel": "JAVA_8",
-  "refmap": "CargoHologram.refmap.json",
+  "refmap": "cargo_hologram.refmap.json",
   "mixins": [
     "DiggerItemAccessor",
     "RandomizableContainerBlockEntityAccessor"
   ],
   "client": [
     "PostChainAccessor",
-    "PostChainMixin",
     "TextureManagerMixin"
   ],
   "injectors": {

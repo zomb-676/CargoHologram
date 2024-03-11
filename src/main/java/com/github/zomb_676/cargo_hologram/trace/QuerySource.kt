@@ -34,10 +34,12 @@ sealed class QuerySource {
     abstract fun requirement(): QueryRequirement
     open fun filterForBlockEntiry(blockEntity: BlockEntity): IntPredicate = ALWAYS_PASS_SLOT_FILTER
 
-    fun attachChunk(level: ServerLevel, chunkPos: ChunkPos) = attachedChunk[level.dimension()]!!.add(chunkPos)
-    fun detachChunk(level: ServerLevel, chunkPos: ChunkPos) = attachedChunk[level.dimension()]!!.remove(chunkPos)
-    fun deatchAllChunk(level: ServerLevel) = attachedChunk[level.dimension()]!!.clear()
-    fun iterAllChunks(level: ServerLevel): Iterator<ChunkPos> = attachedChunk[level.dimension()]!!.iterator()
+    fun attachChunk(level: ResourceKey<Level>, chunkPos: ChunkPos) = attachedChunk[level]!!.add(chunkPos)
+    fun detachChunk(level: ResourceKey<Level>, chunkPos: ChunkPos) = attachedChunk[level]!!.remove(chunkPos)
+    fun detachAllChunk(level: ResourceKey<Level>) = attachedChunk[level]!!.clear()
+    fun iterAllChunks() = attachedChunk.iterator()
+    fun iterAllChunks(level: ResourceKey<Level>): Iterator<ChunkPos> = attachedChunk[level]!!.iterator()
+    abstract fun fullChunk(): Boolean
 
     companion object {
         private val ALL_LEVELS: Set<ResourceKey<Level>> = currentServer().levelKeys().toSet()
@@ -53,6 +55,7 @@ sealed class QuerySource {
         QuerySource() {
         private var valid: Boolean = true
         override fun requirement(): QueryRequirement = requirement
+        override fun fullChunk(): Boolean = true
 
         override fun send(level: ServerLevel, chunkPos: ChunkPos, result: MonitorRawResult) {
             val player = player.queryPlayer() ?: throwOnDev() ?: return

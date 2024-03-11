@@ -62,12 +62,17 @@ object MonitorCenter : BusSubscribe {
     }
 
     fun monitor(level: Level, chunkPos: ChunkPos, source: QuerySource) {
+        source.attachChunk(level.dimension(), chunkPos)
         val map = queryMap[level.dimension()]!!
-        val entry = map.computeIfAbsent(chunkPos) { MonitorEntry() }
+        val entry = map.computeIfAbsent(chunkPos) { MonitorEntry(level,chunkPos) }
         entry.addSource(source)
     }
 
     fun stopMonitor(level: ResourceKey<Level>, source: QuerySource) {
-        queryMap[level]!!.forEach { (_, v) -> v.removeSource(source) }
+        val leveledEntryMap = queryMap[level]!!
+        source.iterAllChunks(level).forEach { pos ->
+            leveledEntryMap[pos]!!.removeSource(source)
+        }
+        source.detachAllChunk(level)
     }
 }

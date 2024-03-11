@@ -1,5 +1,6 @@
 package com.github.zomb_676.cargo_hologram
 
+import com.github.zomb_676.cargo_hologram.capability.CapRegisters
 import com.github.zomb_676.cargo_hologram.data.CargoHologramDataGenerator
 import com.github.zomb_676.cargo_hologram.network.NetworkHandle
 import com.github.zomb_676.cargo_hologram.trace.ClientResultCache
@@ -41,7 +42,8 @@ class CargoHologram {
             MonitorCenter,
             ClientResultCache,
             AllCommands,
-            CargoHologramDataGenerator
+            CargoHologramDataGenerator,
+            CapRegisters
         ).dispatch()
         runOnDistClient { { arrayOf(DebugHud, CargoHologramComponents, BlurHandle).dispatch() } }
         NetworkHandle.registerPackets()

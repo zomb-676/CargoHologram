@@ -4,6 +4,9 @@ import com.github.zomb_676.cargo_hologram.selector.Selector
 import com.github.zomb_676.cargo_hologram.util.inlineAssert
 import net.minecraft.network.FriendlyByteBuf
 
+/**
+ * generic parameters used for [QuerySource]
+ */
 class QueryRequirement(val force: Boolean, val crossDimension: Boolean, vararg val selector: Selector) {
     companion object {
         fun decode(buffer: FriendlyByteBuf): QueryRequirement {

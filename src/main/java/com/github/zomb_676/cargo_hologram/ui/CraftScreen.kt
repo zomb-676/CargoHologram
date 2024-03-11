@@ -1,16 +1,19 @@
 package com.github.zomb_676.cargo_hologram.ui
 
+import com.github.zomb_676.cargo_hologram.network.RequestRemoteTake
 import com.github.zomb_676.cargo_hologram.trace.ClientResultCache
 import com.github.zomb_676.cargo_hologram.ui.component.BlurConfigure
 import com.github.zomb_676.cargo_hologram.ui.component.ItemComponent
 import com.github.zomb_676.cargo_hologram.util.*
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
+import com.github.zomb_676.cargo_hologram.util.interact.InteractHelper
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
 import net.minecraft.core.BlockPos
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.item.ItemStack
+import java.util.*
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
@@ -22,6 +25,7 @@ class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
     private var currentRowIndex = 0
     private val materialAreas = MutableList(9) { _ -> AreaImmute.ofFullScreen() }
     var hovered: Pair<BlockPos, SlotItemStack>? = null
+    var area : AreaImmute? = null
 
     var mainArea: AreaImmute = AreaImmute.ofFullScreen()
         private set
@@ -30,7 +34,7 @@ class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
         super.init()
         this.leftPos -= 25
         this.topPos = min(20, (topPos * 0.6).toInt())
-        mainArea = AreaImmute.ofRelative(leftPos, topPos, 176 + 62, 216).asAreaImmute()
+        mainArea = AreaImmute.ofRelative(leftPos, topPos, 176 + 59, 216).asAreaImmute()
     }
 
     override fun renderBg(pGuiGraphics: GuiGraphics, pPartialTick: Float, pMouseX: Int, pMouseY: Int) {
@@ -45,14 +49,14 @@ class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
         menu.slots.forEach { slot ->
             val x = slot.x + leftPos
             val y = slot.y + topPos
-            pGuiGraphics.renderOutline(x - 1, y - 1, 18, 18, ARGBColor.Presets.WHITE.color)
+            pGuiGraphics.fillRelative(x - 1, y - 1, 18, 18, ARGBColor.Presets.GREY.alpha(0x5f))
             if (!slot.item.isEmpty) {
                 pGuiGraphics.renderItem(slot.item, x, y)
                 pGuiGraphics.renderItemDecorations(minecraft!!.font, slot.item, x, y)
             }
             if (this.isHovering(slot.x, slot.y, 16, 16, pMouseX.toDouble(), pMouseY.toDouble())) {
                 this.hoveredSlot = slot
-                pGuiGraphics.fill(x, y, x + 16, y + 16, ARGBColor.Presets.GREY.color)
+                pGuiGraphics.fillRelative(x - 1, y - 1, 18, 18, ARGBColor.Presets.GREY)
                 if (!slot.item.isEmpty)
                     pGuiGraphics.renderTooltip(minecraft!!.font, slot.item, pMouseX, pMouseY)
             }
@@ -128,6 +132,7 @@ class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
                                 ItemComponent(block)
                             )
                             hovered = pos to SlotItemStack(slot, item)
+                            area = draw.itemArea()
                         }
                         draw.move(1, 1).itemWithDecoration(item).move(1, -1)
                     }
@@ -147,4 +152,15 @@ class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
         return super.mouseScrolled(pMouseX, pMouseY, pDelta)
     }
 
+    override fun mouseClicked(pMouseX: Double, pMouseY: Double, pButton: Int): Boolean {
+        hovered?.let { (pos, slotItem) ->
+            val shiftDown = InteractHelper.currentModifiers().isShiftDown
+            val takeCount = if (shiftDown) slotItem.itemStack.count else 1
+            RequestRemoteTake(
+                takeCount, slotItem, pos, currentClientPlayer().level().dimension(), UUID.randomUUID()
+            ).sendToServer()
+            return true
+        }
+        return super.mouseClicked(pMouseX, pMouseY, pButton)
+    }
 }

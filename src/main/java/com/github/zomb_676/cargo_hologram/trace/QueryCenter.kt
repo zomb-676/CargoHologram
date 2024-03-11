@@ -14,7 +14,7 @@ import java.util.*
  * work between [QuerySource] and [MonitorCenter]
  */
 object QueryCenter : BusSubscribe {
-     val playerSources: MutableMap<UUID, QuerySource.PlayerQuerySource> = mutableMapOf()
+    val playerSources: MutableMap<UUID, QuerySource.PlayerQuerySource> = mutableMapOf()
     private val playerTrace: MutableMap<UUID, LastPlayerLocation> = mutableMapOf()
 
     class LastPlayerLocation(player: ServerPlayer) {

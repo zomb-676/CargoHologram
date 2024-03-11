@@ -7,6 +7,7 @@ import com.github.zomb_676.cargo_hologram.util.ARGBColor
 import com.github.zomb_676.cargo_hologram.util.assign
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
 import com.github.zomb_676.cargo_hologram.util.literal
+import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
 
@@ -66,4 +67,13 @@ class ConfigureScreen : Screen("Configure".literal()), CargoBlurScreen {
     }
 
     override fun isPauseScreen(): Boolean = false
+
+    override fun keyReleased(pKeyCode: Int, pScanCode: Int, pModifiers: Int): Boolean {
+        val key = InputConstants.getKey(pKeyCode, pScanCode)
+        if (minecraft!!.options.keyInventory.isActiveAndMatches(key)) {
+            this.onClose()
+            return true
+        }
+        return super.keyReleased(pKeyCode, pScanCode, pModifiers)
+    }
 }

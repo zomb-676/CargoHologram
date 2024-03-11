@@ -25,6 +25,7 @@ import mezz.jei.api.recipe.transfer.IRecipeTransferError
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandler
 import mezz.jei.api.registration.IGuiHandlerRegistration
 import mezz.jei.api.registration.IRecipeTransferRegistration
+import mezz.jei.api.runtime.IClickableIngredient
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.renderer.Rect2i
 import net.minecraft.resources.ResourceLocation
@@ -116,6 +117,23 @@ class CargoHologramJeiPlugin : IModPlugin {
                 override fun onComplete() {}
                 override fun shouldHighlightTargets(): Boolean = true
             })
+        val ingredientManager = registration.jeiHelpers.ingredientManager
+        registration.addGenericGuiContainerHandler(CraftScreen::class.java, object : IGuiContainerHandler<CraftScreen> {
+            override fun getClickableIngredientUnderMouse(
+                containerScreen: CraftScreen,
+                mouseX: Double,
+                mouseY: Double,
+            ): Optional<IClickableIngredient<*>> {
+                val itemStack = containerScreen.hovered?.second?.itemStack ?: return Optional.empty()
+                return ingredientManager.createTypedIngredient(itemStack)
+                    .map { ingredient: ITypedIngredient<ItemStack> ->
+                        object : IClickableIngredient<ItemStack> {
+                            override fun getTypedIngredient(): ITypedIngredient<ItemStack> = ingredient
+                            override fun getArea(): Rect2i = containerScreen.area!!.asRect2i()
+                        }
+                    }
+            }
+        })
     }
 
     /**

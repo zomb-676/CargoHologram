@@ -4,6 +4,7 @@ import com.github.zomb_676.cargo_hologram.CargoHologram
 import com.github.zomb_676.cargo_hologram.Config
 import com.github.zomb_676.cargo_hologram.util.cursor.Cursor
 import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.components.AbstractWidget
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.core.BlockPos
@@ -183,5 +184,9 @@ fun <T> T.location(registries: IForgeRegistry<T>) = registries.getKey(this)!!
 operator fun MutableComponent.plus(component: Component): MutableComponent = this.append(component)
 operator fun String.plus(component: Component): MutableComponent = this.literal().append(component)
 
-fun AbstractWidget.isIn(mouseX : Double, mouseY : Double) =
+fun AbstractWidget.isIn(mouseX: Double, mouseY: Double) =
     mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height
+
+fun GuiGraphics.fillRelative(x: Int, y: Int, width: Int, height: Int, color: ARGBColor) {
+    this.fill(x, y, x + width, y + height, color.color)
+}

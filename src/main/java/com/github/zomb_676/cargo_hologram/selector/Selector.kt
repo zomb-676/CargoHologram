@@ -1,5 +1,7 @@
 package com.github.zomb_676.cargo_hologram.selector
 
+import com.github.zomb_676.cargo_hologram.trace.GlobalFilter
+import com.github.zomb_676.cargo_hologram.util.ListMode
 import com.github.zomb_676.cargo_hologram.util.forEachDiffIndex
 import com.github.zomb_676.cargo_hologram.util.log
 import net.minecraft.resources.ResourceLocation
@@ -7,7 +9,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraftforge.registries.ForgeRegistries
 import java.util.function.IntPredicate
 
-class Selector(val type: BlockEntityType<*>,val slotSelectors: List<SlotSelector>) : IntPredicate {
+class Selector(val type: BlockEntityType<*>, val slotSelectors: List<SlotSelector>) {
 
     companion object {
         fun checkValid(str: String): Boolean {
@@ -65,13 +67,13 @@ class Selector(val type: BlockEntityType<*>,val slotSelectors: List<SlotSelector
         return "$location,${slotSelectors.joinToString(separator = ",", transform = SlotSelector::decode)}"
     }
 
-    override fun test(value: Int): Boolean {
-        if (slotSelectors.isEmpty()) return true
-        for (check in slotSelectors) {
-            if (check.test(value)) return true
-        }
-        return false
-    }
+//    override fun test(value: Int): Boolean {
+//        if (slotSelectors.isEmpty()) return true
+//        for (check in slotSelectors) {
+//            if (check.test(value)) return true
+//        }
+//        return false
+//    }
 
     fun assertSlotSelectorValid() {
         val slotInvalid = slotSelectors.filter { !it.valid() }
@@ -108,4 +110,28 @@ class Selector(val type: BlockEntityType<*>,val slotSelectors: List<SlotSelector
     }
 
     override fun toString(): String = decode()
+    fun asIntPredicate(mode: ListMode): IntPredicate =
+        when (mode) {
+            ListMode.BLACK_LIST_MODE -> {
+                IntPredicate { slot ->
+                    if (slotSelectors.isEmpty()) return@IntPredicate true
+                    for (selector in slotSelectors) {
+                        if (selector.test(slot)) return@IntPredicate false
+                    }
+                    return@IntPredicate true
+                }
+            }
+
+            ListMode.WHITE_LIST_MODE -> {
+                IntPredicate { slot ->
+                    if (slotSelectors.isEmpty()) return@IntPredicate false
+                    for (selector in slotSelectors) {
+                        if (selector.test(slot)) return@IntPredicate true
+                    }
+                    return@IntPredicate false
+                }
+            }
+
+            ListMode.IGNORE -> GlobalFilter.ALWAYS_TRUE
+        }
 }

@@ -38,9 +38,6 @@ object Dispatcher {
         crossinline codeBlock: (T) -> Unit,
     ) {
         Asserts.check(T::class.java.isGenericEvent(), "${T::class.java.simpleName} is not GenericEvent<T>")
-        switchEvent<T>().addGenericListener(
-            V::class.java, priority, receiveCanceled, T::class.java
-        ) { e -> codeBlock(e) }
         warp(codeBlock,
             { s -> switchEvent<T>().addGenericListener(V::class.java, priority, receiveCanceled, T::class.java, s) },
             { "error while run on Event:${T::class.java.simpleName} Generic:${V::class.java.simpleName}" })

@@ -17,4 +17,6 @@ class UIConfigureItem(private val f: () -> Screen) : Item(Properties().stacksTo(
         }
         return super.use(pLevel, pPlayer, pUsedHand)
     }
+
+    override fun isFoil(pStack: ItemStack): Boolean = true
 }
