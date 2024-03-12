@@ -1,10 +1,10 @@
 package com.github.zomb_676.cargo_hologram.ui
 
 import com.github.zomb_676.cargo_hologram.AllRegisters
-import com.github.zomb_676.cargo_hologram.trace.MonitorCenter
+import com.github.zomb_676.cargo_hologram.trace.monitor.MonitorCenter
 import com.github.zomb_676.cargo_hologram.trace.QueryCenter
-import com.github.zomb_676.cargo_hologram.trace.QueryRequirement
-import com.github.zomb_676.cargo_hologram.trace.QuerySource
+import com.github.zomb_676.cargo_hologram.trace.request.QueryRequirement
+import com.github.zomb_676.cargo_hologram.trace.request.QuerySource
 import com.github.zomb_676.cargo_hologram.util.currentRegistryAccess
 import com.github.zomb_676.cargo_hologram.util.currentServer
 import com.github.zomb_676.cargo_hologram.util.near

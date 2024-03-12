@@ -44,7 +44,7 @@ object CargoHologramDataGenerator : BusSubscribe {
                 monitor.useItemModel(Items.DIAMOND)
                 crafter.useItemModel(Items.DIAMOND)
                 cargoFilter.useItemModel(Items.DIAMOND)
-                glasses.useItemModel(Items.DIAMOND)
+                panel.useItemModel(Items.DIAMOND)
                 itemFilter.useItemModel(Items.NAME_TAG)
                 configureUISTick.useItemModel(Items.DEBUG_STICK)
                 remoteCraftTableItem.useItemModel(Items.CRAFTING_TABLE)
@@ -122,7 +122,7 @@ object CargoHologramDataGenerator : BusSubscribe {
                 monitor.lang("Monitor")
                 crafter.lang("Crafter")
                 cargoFilter.lang("Cargo Filter")
-                glasses.lang("Monitor Glasses")
+                panel.lang("Monitor Panel")
                 itemFilter.lang("Item Filter")
                 configureUISTick.lang("Configure UI stick")
             }

@@ -1,5 +1,7 @@
 package com.github.zomb_676.cargo_hologram.trace
 
+import com.github.zomb_676.cargo_hologram.trace.data.MonitorRawResult
+import com.github.zomb_676.cargo_hologram.trace.data.MonitorType
 import com.github.zomb_676.cargo_hologram.util.*
 import net.minecraft.resources.ResourceKey
 import net.minecraft.world.level.ChunkPos

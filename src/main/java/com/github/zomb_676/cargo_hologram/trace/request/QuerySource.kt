@@ -1,9 +1,9 @@
-package com.github.zomb_676.cargo_hologram.trace
+package com.github.zomb_676.cargo_hologram.trace.request
 
-import com.github.zomb_676.cargo_hologram.util.currentServer
-import com.github.zomb_676.cargo_hologram.util.isOnline
-import com.github.zomb_676.cargo_hologram.util.queryPlayer
-import com.github.zomb_676.cargo_hologram.util.throwOnDev
+import com.github.zomb_676.cargo_hologram.trace.GlobalFilter
+import com.github.zomb_676.cargo_hologram.trace.monitor.MonitorEntry
+import com.github.zomb_676.cargo_hologram.trace.data.MonitorRawResult
+import com.github.zomb_676.cargo_hologram.util.*
 import net.minecraft.resources.ResourceKey
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
@@ -19,35 +19,52 @@ import java.util.function.IntPredicate
  * request centered object
  */
 sealed class QuerySource {
+    private var attachedLevel: ResourceKey<Level> = Level.OVERWORLD
+    private val attached: MutableMap<ChunkPos, MonitorEntry> = mutableMapOf()
 
-    private val attachedChunk: Map<ResourceKey<Level>, MutableList<ChunkPos>> = ALL_LEVELS.associateWith { mutableListOf() }
+    fun attachLevel(level: ResourceKey<Level>) {
+        if (attachedLevel == level) return
+        this.attachedLevel = level
+    }
 
-    fun attachedChunks(): Map<ResourceKey<Level>, List<ChunkPos>> = attachedChunk
+    fun attach(entry: MonitorEntry) {
+        val before = attached.put(entry.chunkPos, entry)
+        if (before != null)
+            logOnDebug { error("attach chunk:${entry.chunkPos} while already attached") }
+    }
+
+    fun detach(chunkPos: ChunkPos) = attached.remove(chunkPos)
+    fun detachAll() = attached.clear()
+    fun attached() = attached.iterator()
 
     /**
      * @param level the level of the data, not the source's level
      */
     abstract fun send(level: ServerLevel, chunkPos: ChunkPos, result: MonitorRawResult)
-    open fun valid(): Boolean = true
-    fun onRemove() {}
-    fun filter(blockEntity: BlockEntity) = true
-    abstract fun requirement(): QueryRequirement
-    open fun filterForBlockEntiry(blockEntity: BlockEntity): IntPredicate = ALWAYS_PASS_SLOT_FILTER
 
-    fun attachChunk(level: ResourceKey<Level>, chunkPos: ChunkPos) = attachedChunk[level]!!.add(chunkPos)
-    fun detachChunk(level: ResourceKey<Level>, chunkPos: ChunkPos) = attachedChunk[level]!!.remove(chunkPos)
-    fun detachAllChunk(level: ResourceKey<Level>) = attachedChunk[level]!!.clear()
-    fun iterAllChunks() = attachedChunk.iterator()
-    fun iterAllChunks(level: ResourceKey<Level>): Iterator<ChunkPos> = attachedChunk[level]!!.iterator()
+    open fun valid(): Boolean = true
+    abstract fun invalidate()
+    open fun onRemove() {}
+
+    fun filter(blockEntity: BlockEntity) = true
+    open fun filterForBlockEntiry(blockEntity: BlockEntity): IntPredicate = GlobalFilter.ALWAYS_TRUE
+
+    protected abstract fun requirement(): QueryRequirement
+    fun force() = requirement().force
+    fun crossDimension() = requirement().crossDimension
+    fun selectors() = requirement().selector
+
     abstract fun fullChunk(): Boolean
 
     companion object {
-        private val ALL_LEVELS: Set<ResourceKey<Level>> = currentServer().levelKeys().toSet()
-        val ALWAYS_PASS_SLOT_FILTER = IntPredicate { true }
         fun ofPlayerCentered(player: ServerPlayer, radius: Int, requirement: QueryRequirement): PlayerQuerySource {
             Asserts.check(radius > 0, "radius:$radius must > 0")
             Asserts.check(player.isOnline(), "player{name:${player.name},uuid:${player.uuid}}} is offline")
             return PlayerQuerySource(player.uuid, radius, requirement)
+        }
+
+        fun ofFixedPostion(player: UUID, loadChunk : Boolean, requirement: QueryRequirement) {
+
         }
     }
 
@@ -62,10 +79,12 @@ sealed class QuerySource {
             result.warpForPlayer(level, chunkPos).sendTo(PacketDistributor.PLAYER.with { player })
         }
 
-        fun invalidate() {
+        override fun invalidate() {
             this.valid = false
         }
 
         override fun valid(): Boolean = valid
     }
+
+    class FixedPosition()
 }

@@ -53,15 +53,7 @@ object BlurHandle : BusSubscribe {
         }
     }
 
-    fun drawScreenBackground(guiGraphics: GuiGraphics, blurArea: AreaImmute) {
-        val buffer = guiGraphics.bufferSource().getBuffer(RenderType.gui())
-        val pose = guiGraphics.pose().last().pose()
-    }
-
     override fun registerEvent(dispatcher: Dispatcher) {
-        dispatcher<ScreenEvent.Init> { event ->
-
-        }
         dispatcher<ScreenEvent.Closing> {
             val gameRenderer = currentMinecraft().gameRenderer
             if (Objects.equals(gameRenderer.currentEffect()?.name, BLUR_EFFECT_PATH.toString())) {

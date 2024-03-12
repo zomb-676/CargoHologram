@@ -1,7 +1,9 @@
-package com.github.zomb_676.cargo_hologram.trace
+package com.github.zomb_676.cargo_hologram.trace.monitor
 
+import com.github.zomb_676.cargo_hologram.trace.request.QuerySource
 import com.github.zomb_676.cargo_hologram.util.BusSubscribe
 import com.github.zomb_676.cargo_hologram.util.Dispatcher
+import com.github.zomb_676.cargo_hologram.util.runOnDistClient
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet
 import net.minecraft.resources.ResourceKey
 import net.minecraft.server.level.ServerLevel
@@ -36,8 +38,12 @@ object MonitorCenter : BusSubscribe {
                 queryMap.computeIfAbsent(dimKey) { _ -> mutableMapOf() }
             }
         }
-        dispatcher<ClientPlayerNetworkEvent.LoggingOut> { _ ->
-            queryMap.forEach { (_, v) -> v.clear() }
+        runOnDistClient {
+            {
+                dispatcher<ClientPlayerNetworkEvent.LoggingOut> { _ ->
+                    queryMap.forEach { (_, v) -> v.clear() }
+                }
+            }
         }
         dispatcher<LevelTickEvent> { event ->
             if (event.phase != TickEvent.Phase.END) return@dispatcher
@@ -62,17 +68,16 @@ object MonitorCenter : BusSubscribe {
     }
 
     fun monitor(level: Level, chunkPos: ChunkPos, source: QuerySource) {
-        source.attachChunk(level.dimension(), chunkPos)
         val map = queryMap[level.dimension()]!!
-        val entry = map.computeIfAbsent(chunkPos) { MonitorEntry(level,chunkPos) }
+        val entry = map.computeIfAbsent(chunkPos) { MonitorEntry(level, chunkPos) }
         entry.addSource(source)
+        source.attach(entry)
     }
 
     fun stopMonitor(level: ResourceKey<Level>, source: QuerySource) {
-        val leveledEntryMap = queryMap[level]!!
-        source.iterAllChunks(level).forEach { pos ->
-            leveledEntryMap[pos]!!.removeSource(source)
+        source.attached().forEach { (_, entry) ->
+            entry.removeSource(source)
         }
-        source.detachAllChunk(level)
+        source.detachAll()
     }
 }

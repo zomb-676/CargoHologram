@@ -4,12 +4,9 @@ import com.github.zomb_676.cargo_hologram.capability.CapRegisters
 import com.github.zomb_676.cargo_hologram.data.CargoHologramDataGenerator
 import com.github.zomb_676.cargo_hologram.network.NetworkHandle
 import com.github.zomb_676.cargo_hologram.trace.ClientResultCache
-import com.github.zomb_676.cargo_hologram.trace.MonitorCenter
 import com.github.zomb_676.cargo_hologram.trace.QueryCenter
-import com.github.zomb_676.cargo_hologram.ui.CargoBlurScreen
-import com.github.zomb_676.cargo_hologram.ui.CraftScreen
-import com.github.zomb_676.cargo_hologram.ui.DebugHud
-import com.github.zomb_676.cargo_hologram.ui.FilterScreen
+import com.github.zomb_676.cargo_hologram.trace.monitor.MonitorCenter
+import com.github.zomb_676.cargo_hologram.ui.*
 import com.github.zomb_676.cargo_hologram.ui.component.CargoHologramComponents
 import com.github.zomb_676.cargo_hologram.util.*
 import com.mojang.logging.LogUtils
@@ -32,7 +29,7 @@ class CargoHologram {
         fun rl(path: String) = ResourceLocation(MOD_ID, path)
     }
 
-    lateinit var textures : CargoHologramSpriteUploader
+    lateinit var textures: CargoHologramSpriteUploader
 
     init {
         arrayOf(
@@ -40,12 +37,21 @@ class CargoHologram {
             AllRegisters,
             QueryCenter,
             MonitorCenter,
-            ClientResultCache,
             AllCommands,
             CargoHologramDataGenerator,
             CapRegisters
         ).dispatch()
-        runOnDistClient { { arrayOf(DebugHud, CargoHologramComponents, BlurHandle).dispatch() } }
+        runOnDistClient {
+            {
+                arrayOf(
+                    DebugHud,
+                    PanelHud,
+                    ClientResultCache,
+                    CargoHologramComponents,
+                    BlurHandle
+                ).dispatch()
+            }
+        }
         NetworkHandle.registerPackets()
 
         Dispatcher.enqueueWork<FMLClientSetupEvent> {
@@ -58,9 +64,13 @@ class CargoHologram {
             event.registerReloadListener(textures)
         }
 
-        Dispatcher<RenderGuiOverlayEvent.Pre> {event ->
-            if (event.overlay == VanillaGuiOverlay.CROSSHAIR.type() && currentMinecraft().screen is CargoBlurScreen) {
-                event.isCanceled = true
+        runOnDistClient {
+            {
+                Dispatcher<RenderGuiOverlayEvent.Pre> { event ->
+                    if (event.overlay == VanillaGuiOverlay.CROSSHAIR.type() && currentMinecraft().screen is CargoBlurScreen) {
+                        event.isCanceled = true
+                    }
+                }
             }
         }
     }

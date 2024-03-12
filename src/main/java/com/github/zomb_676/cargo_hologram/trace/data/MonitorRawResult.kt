@@ -1,4 +1,4 @@
-package com.github.zomb_676.cargo_hologram.trace
+package com.github.zomb_676.cargo_hologram.trace.data
 
 import com.github.zomb_676.cargo_hologram.network.WrappedResult
 import com.github.zomb_676.cargo_hologram.util.MultiBlockContainerHandle
@@ -7,7 +7,6 @@ import it.unimi.dsi.fastutil.ints.IntAVLTreeSet
 import net.minecraft.core.BlockPos
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
-import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraftforge.common.capabilities.ForgeCapabilities

@@ -13,11 +13,11 @@ import net.minecraft.client.gui.screens.Screen
 
 class ConfigureScreen : Screen("Configure".literal()), CargoBlurScreen {
 
-    var mainArea = AreaImmute.ofFullScreen()
-    lateinit var blurSlider: CargoSlider
-    lateinit var blurExpandSlider: CargoSlider
-    lateinit var blurBgAlpha: CargoSlider
-    lateinit var blurOutline: CargoCheckBox
+    private var mainArea = AreaImmute.ofFullScreen()
+    private lateinit var blurSlider: CargoSlider
+    private lateinit var blurExpandSlider: CargoSlider
+    private lateinit var blurBgAlpha: CargoSlider
+    private lateinit var blurOutline: CargoCheckBox
 
     override fun init() {
         mainArea = AreaImmute.ofFullScreen().asBaseCursor()

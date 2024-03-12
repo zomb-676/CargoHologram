@@ -1,9 +1,10 @@
 package com.github.zomb_676.cargo_hologram.util
 
+import net.minecraft.util.FastColor
 import net.minecraft.world.item.DyeColor
-import org.jetbrains.annotations.Range
 
 @JvmInline
+@Suppress("unused")
 value class ARGBColor private constructor(val color: Int) {
     companion object {
         private const val ALPHA_BIT_OFFSET = 8 * 3
@@ -18,7 +19,6 @@ value class ARGBColor private constructor(val color: Int) {
         fun ofARGB(color: Int) = ARGBColor(color)
         fun of(red: Int, green: Int, blue: Int, alpha: Int = 0xff) =
             ARGBColor((alpha shl ALPHA_BIT_OFFSET) or (red shl RED_BIT_OFFSET) or (green shl GREEN_BIT_OFFSET) or (blue shl BLUE_BIT_OFFSET))
-
     }
 
     object Vanilla {

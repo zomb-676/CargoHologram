@@ -1,5 +1,7 @@
 package com.github.zomb_676.cargo_hologram.trace
 
+import com.github.zomb_676.cargo_hologram.trace.monitor.MonitorCenter
+import com.github.zomb_676.cargo_hologram.trace.request.QuerySource
 import com.github.zomb_676.cargo_hologram.util.*
 import net.minecraft.resources.ResourceKey
 import net.minecraft.server.level.ServerPlayer
@@ -64,13 +66,16 @@ object QueryCenter : BusSubscribe {
             playerSources.forEach { (playerUuid, source) ->
                 val player = playerUuid.queryPlayer() ?: return@forEach
                 if (playerTrace[playerUuid]!!.update(player)) {
+                    source.attached().forEach { (_, entry) -> entry.removeSource(source) }
+                    source.detachAll()
+                    source.attachLevel(player.level().dimension())
                     monitorForPlayer(player, source)
                 }
             }
         }
         dispatcher<PlayerEvent.PlayerLoggedOutEvent> { event ->
             val playerUuid = event.entity.uuid
-            playerSources.remove(playerUuid)
+            playerSources.remove(playerUuid)?.invalidate()
             playerTrace.remove(playerUuid)
         }
     }
@@ -80,6 +85,7 @@ object QueryCenter : BusSubscribe {
         source: QuerySource.PlayerQuerySource,
     ) {
         val level = player.level()
+        source.attachLevel(player.level().dimension())
         ChunkPos(player.blockPosition()).near(source.radius) { chunkPos ->
             MonitorCenter.monitor(level, chunkPos, source)
         }

@@ -1,4 +1,4 @@
-package com.github.zomb_676.cargo_hologram.trace
+package com.github.zomb_676.cargo_hologram.trace.request
 
 import com.github.zomb_676.cargo_hologram.selector.Selector
 import com.github.zomb_676.cargo_hologram.util.inlineAssert

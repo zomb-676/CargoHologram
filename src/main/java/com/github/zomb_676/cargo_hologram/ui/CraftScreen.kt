@@ -43,6 +43,7 @@ class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
 
     @Suppress("NAME_SHADOWING")
     override fun render(pGuiGraphics: GuiGraphics, pMouseX: Int, pMouseY: Int, pPartialTick: Float) {
+        this.hovered = null
         this.renderBg(pGuiGraphics, pPartialTick, pMouseX, pMouseY)
         val draw = mainArea.asBaseCursor().forDraw(pGuiGraphics)
         draw.outline(ARGBColor.Vanilla.WHITE)

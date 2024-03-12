@@ -1,5 +1,8 @@
-package com.github.zomb_676.cargo_hologram.trace
+package com.github.zomb_676.cargo_hologram.trace.monitor
 
+import com.github.zomb_676.cargo_hologram.trace.GlobalFilter
+import com.github.zomb_676.cargo_hologram.trace.data.MonitorRawResult
+import com.github.zomb_676.cargo_hologram.trace.request.QuerySource
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.block.entity.BlockEntity
@@ -11,7 +14,7 @@ import java.util.function.IntPredicate
  */
 class MonitorRequirement(val chunkPos: ChunkPos) {
 
-    private val sources: MutableList<QuerySource> = mutableListOf()
+    private val sources: MutableSet<QuerySource> = mutableSetOf()
 
     private var forceCount: Int = 0
     private var fullChunkCount : Int = 0
@@ -22,7 +25,7 @@ class MonitorRequirement(val chunkPos: ChunkPos) {
 
     fun filterBlockEntity(blockEntity: BlockEntity): Boolean = sources.any { it.filter(blockEntity) }
 
-    fun slotFilterForBlockEntity(blockEntity: BlockEntity): IntPredicate = map[blockEntity.type] ?: QuerySource.ALWAYS_PASS_SLOT_FILTER
+    fun slotFilterForBlockEntity(blockEntity: BlockEntity): IntPredicate = map[blockEntity.type] ?: GlobalFilter.ALWAYS_TRUE
 
     /**
      * @param level the level of the data, not the source's level
@@ -32,24 +35,17 @@ class MonitorRequirement(val chunkPos: ChunkPos) {
     }
 
     fun addSource(querySource: QuerySource) {
-        sources.add(querySource)
-        val requirement = querySource.requirement()
-        requirement.selector.forEach { selector ->
-//            val before = map.put(selector.type, selector)
-            //TODO
-        }
-        if (requirement.force) {
-            forceCount++
+        if (sources.add(querySource)) {
+            if (querySource.force()) forceCount++
+            if (querySource.fullChunk()) fullChunkCount++
+
         }
     }
 
     fun removeSource(querySource: QuerySource) {
         if (sources.remove(querySource)) {
-            val requirement = querySource.requirement()
-            if (requirement.force) {
-                forceCount--
-                //TODO
-            }
+            if (querySource.force()) forceCount--
+            if (querySource.fullChunk()) fullChunkCount--
         }
     }
 
@@ -62,7 +58,8 @@ class MonitorRequirement(val chunkPos: ChunkPos) {
             val source = iter.next()
             if (source.valid()) continue
             source.onRemove()
-            if (source.requirement().force) this.forceCount--
+            iter.remove()
+            if (source.force()) this.forceCount--
             if (source.fullChunk()) this.fullChunkCount--
         }
         return sources.isNotEmpty()

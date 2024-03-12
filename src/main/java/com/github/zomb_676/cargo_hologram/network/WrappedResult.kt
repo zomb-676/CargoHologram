@@ -1,8 +1,8 @@
 package com.github.zomb_676.cargo_hologram.network
 
 import com.github.zomb_676.cargo_hologram.trace.ClientResultCache
-import com.github.zomb_676.cargo_hologram.trace.MonitorRawResult
-import com.github.zomb_676.cargo_hologram.trace.MonitorType
+import com.github.zomb_676.cargo_hologram.trace.data.MonitorRawResult
+import com.github.zomb_676.cargo_hologram.trace.data.MonitorType
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.resources.ResourceKey

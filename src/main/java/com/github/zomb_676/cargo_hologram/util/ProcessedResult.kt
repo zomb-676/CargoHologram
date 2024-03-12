@@ -1,6 +1,6 @@
 package com.github.zomb_676.cargo_hologram.util
 
-import com.github.zomb_676.cargo_hologram.trace.MonitorRawResult
+import com.github.zomb_676.cargo_hologram.trace.data.MonitorRawResult
 import net.minecraft.core.BlockPos
 
 class ProcessedResult private constructor(val data: Map<BlockPos, List<SlotItemStack>>) {

@@ -12,7 +12,6 @@ import net.minecraft.world.inventory.MenuType
 import net.minecraft.world.item.BlockItem
 import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item
-import net.minecraft.world.item.ItemFrameItem
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.Block
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent
@@ -63,10 +62,10 @@ object AllRegisters : BusSubscribe {
         val monitor: RegistryObject<CargoMonitor> = ITEM.register("monitor") { CargoMonitor() }
         val crafter: RegistryObject<CraftPanel> = ITEM.register("craft_panel") { CraftPanel() }
         val cargoFilter: RegistryObject<CargoFilter> = ITEM.register("cargo_filter") { CargoFilter() }
-        val glasses: RegistryObject<MonitorGlasses> = ITEM.register("monitor_glasses") { MonitorGlasses() }
+        val panel: RegistryObject<MonitorPanel> = ITEM.register("monitor_glasses") { MonitorPanel() }
         val itemFilter: RegistryObject<ItemFilter> = ITEM.register("filter_item") { ItemFilter() }
         val configureUISTick: RegistryObject<Item> =
-            ITEM.register("configure_ui_sitck") { UIConfigureItem(::ConfigureScreen) }
+            ITEM.register("configure_ui_sitck") { UIConfigureItem { ::ConfigureScreen } }
         val remoteCraftTableItem = ITEM.register("remote_craft_table") {
             BlockItem(Blocks.remoteCraftTable.get(), Item.Properties())
         }

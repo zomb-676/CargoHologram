@@ -4,7 +4,7 @@ import com.github.zomb_676.cargo_hologram.network.PlayerCenteredQueryRequestPack
 import com.github.zomb_676.cargo_hologram.network.PlayerCenteredQueryStopPack
 import com.github.zomb_676.cargo_hologram.network.RequestRemoteTake
 import com.github.zomb_676.cargo_hologram.trace.ClientResultCache
-import com.github.zomb_676.cargo_hologram.trace.QueryRequirement
+import com.github.zomb_676.cargo_hologram.trace.request.QueryRequirement
 import com.github.zomb_676.cargo_hologram.ui.component.BlurConfigure
 import com.github.zomb_676.cargo_hologram.ui.component.ItemComponent
 import com.github.zomb_676.cargo_hologram.util.*
@@ -26,7 +26,7 @@ class MonitorScreen : Screen("monitor".literal()), CargoBlurScreen {
 
     var mainArea: AreaImmute = cursor
         private set
-    var hovered: Pair<BlockPos, SlotItemStack>? = null
+    private var hovered: Pair<BlockPos, SlotItemStack>? = null
 
     init {
         PlayerCenteredQueryRequestPack(

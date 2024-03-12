@@ -39,7 +39,7 @@ object AllCommands : BusSubscribe {
                     }
                 }
                 execute {
-                    val enable = DebugHud.enable
+                    val enable = !DebugHud.enable
                     source.sendSystemMessage("DebugHud:$enable".literal())
                 }
             }

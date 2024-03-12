@@ -5,7 +5,7 @@
   "item.cargo_hologram.craft_panel": "Crafter",
   "item.cargo_hologram.filter_item": "Item Filter",
   "item.cargo_hologram.monitor": "Monitor",
-  "item.cargo_hologram.monitor_glasses": "Monitor Glasses",
+  "item.cargo_hologram.monitor_glasses": "Monitor Panel",
   "itemGroup.cargo_hologram.items": "CargoHologram",
   "ui.cargo_hologram.configure_ui_tip": "use command or Configure UI stick to configure"
 }

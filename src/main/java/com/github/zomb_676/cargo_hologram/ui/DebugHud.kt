@@ -1,11 +1,11 @@
 package com.github.zomb_676.cargo_hologram.ui
 
-import com.github.zomb_676.cargo_hologram.util.BusSubscribe
-import com.github.zomb_676.cargo_hologram.util.Dispatcher
-import com.github.zomb_676.cargo_hologram.util.currentMinecraft
+import com.github.zomb_676.cargo_hologram.AllRegisters
+import com.github.zomb_676.cargo_hologram.trace.monitor.MonitorCenter
+import com.github.zomb_676.cargo_hologram.util.*
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
-import com.github.zomb_676.cargo_hologram.util.isOnDev
 import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.world.entity.EquipmentSlot
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent
 import net.minecraftforge.client.gui.overlay.ForgeGui
 import net.minecraftforge.client.gui.overlay.IGuiOverlay
@@ -27,8 +27,13 @@ object DebugHud : BusSubscribe, IGuiOverlay {
         screenWidth: Int,
         screenHeight: Int,
     ) {
-        if (currentMinecraft().options.renderDebug) return
-        val drawer = AreaImmute.ofSize(screenWidth, screenHeight).asBaseCursor().forDraw(guiGraphics)
+        if (gui.minecraft.options.renderDebug) return
+        if (isOnProduct()) return
+        val draw = AreaImmute.ofFullScreen().asBaseCursor().inner(20).forDraw(guiGraphics)
 
+        MonitorCenter.queryMap.forEach { (level, data) ->
+            draw.string("level:${level.location()}, have ${data.size} entries")
+            draw.nextLine()
+        }
     }
 }

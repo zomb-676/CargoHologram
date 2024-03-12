@@ -9,11 +9,11 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
 
-class UIConfigureItem(private val f: () -> Screen) : Item(Properties().stacksTo(1)) {
+class UIConfigureItem(private val f: () -> () -> Screen) : Item(Properties().stacksTo(1)) {
     override fun use(pLevel: Level, pPlayer: Player, pUsedHand: InteractionHand): InteractionResultHolder<ItemStack> {
         if (!pLevel.isClientSide) {
             val mc = currentMinecraft()
-            mc.tell { mc.setScreen(f.invoke()) }
+            mc.tell { mc.setScreen(f.invoke().invoke()) }
         }
         return super.use(pLevel, pPlayer, pUsedHand)
     }

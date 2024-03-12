@@ -1,8 +1,8 @@
 package com.github.zomb_676.cargo_hologram.network
 
 import com.github.zomb_676.cargo_hologram.trace.QueryCenter
-import com.github.zomb_676.cargo_hologram.trace.QueryRequirement
-import com.github.zomb_676.cargo_hologram.trace.QuerySource
+import com.github.zomb_676.cargo_hologram.trace.request.QueryRequirement
+import com.github.zomb_676.cargo_hologram.trace.request.QuerySource
 import com.github.zomb_676.cargo_hologram.util.queryPlayer
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraftforge.network.NetworkEvent
