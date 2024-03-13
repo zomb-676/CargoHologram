@@ -14,15 +14,15 @@ import net.minecraft.world.level.Level
 
 class MonitorPanel : Item(Properties().stacksTo(1)) {
     companion object {
-        var enable: Boolean = false
+        var enable: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
             private set
     }
 
     override fun use(pLevel: Level, pPlayer: Player, pUsedHand: InteractionHand): InteractionResultHolder<ItemStack> {
+        enable.set(!enable.get())
         if (!pLevel.isClientSide) {
-            enable = !enable
-            pPlayer.sendSystemMessage("switch Monitor State -> ${if (enable) "enable" else "disable"}".literal())
-            if (enable) {
+            pPlayer.sendSystemMessage("switch Monitor State -> ${if (enable.get()) "enable" else "disable"}".literal())
+            if (enable.get()) {
                 val source = QuerySource.ofPlayerCentered(
                     pPlayer as ServerPlayer,
                     2, QueryRequirement(true, crossDimension = true)

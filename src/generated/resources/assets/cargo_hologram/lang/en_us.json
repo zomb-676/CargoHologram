@@ -1,11 +1,15 @@
 {
+  "block.cargo_hologram.cargo_inserter": "Cargo Inserter",
+  "block.cargo_hologram.cargo_storage": "Cargo Storage",
   "block.cargo_hologram.remote_craft_table": "RemoteCraftTable",
   "item.cargo_hologram.cargo_filter": "Cargo Filter",
   "item.cargo_hologram.configure_ui_sitck": "Configure UI stick",
   "item.cargo_hologram.craft_panel": "Crafter",
-  "item.cargo_hologram.filter_item": "Item Filter",
+  "item.cargo_hologram.linker": "Linker",
+  "item.cargo_hologram.list_filter": "List Filter",
   "item.cargo_hologram.monitor": "Monitor",
   "item.cargo_hologram.monitor_glasses": "Monitor Panel",
+  "item.cargo_hologram.trait_filter": "Item Trait Filter",
   "itemGroup.cargo_hologram.items": "CargoHologram",
   "ui.cargo_hologram.configure_ui_tip": "use command or Configure UI stick to configure"
 }

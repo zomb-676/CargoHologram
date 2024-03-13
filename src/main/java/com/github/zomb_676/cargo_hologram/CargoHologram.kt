@@ -46,6 +46,7 @@ class CargoHologram {
                 arrayOf(
                     DebugHud,
                     PanelHud,
+                    CargoStorageHud,
                     ClientResultCache,
                     CargoHologramComponents,
                     BlurHandle
@@ -55,8 +56,9 @@ class CargoHologram {
         NetworkHandle.registerPackets()
 
         Dispatcher.enqueueWork<FMLClientSetupEvent> {
-            MenuScreens.register(AllRegisters.CRAFTER_MANU.get(), ::CraftScreen)
-            MenuScreens.register(AllRegisters.FILTER_MANU.get(), ::FilterScreen)
+            MenuScreens.register(AllRegisters.Menus.CRAFTER_MANU.get(), ::CraftScreen)
+            MenuScreens.register(AllRegisters.Menus.FILTER_MANU.get(), ::FilterScreen)
+            MenuScreens.register(AllRegisters.Menus.CARGO_STORAGE_MENU.get(), ::CargoStorageScreen)
         }
 
         Dispatcher<RegisterClientReloadListenersEvent> { event ->

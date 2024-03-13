@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "cargo_hologram:block/cargo_inserter"
+    }
+  }
+}

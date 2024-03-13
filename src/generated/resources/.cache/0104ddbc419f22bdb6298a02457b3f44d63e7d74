@@ -1,2 +1,4 @@
-// 1.20.1	2024-03-11T17:37:33.5541825	Block Models: cargo_hologram
+// 1.20.1	2024-03-13T14:24:43.1907908	Block Models: cargo_hologram
+c70bcbd47fb6d03dd413fd38772c977d22dcdf86 assets/cargo_hologram/models/block/cargo_inserter.json
+3a87aba93140e66ff5772eb5fb355054be7f5236 assets/cargo_hologram/models/block/cargo_storage.json
 f36fa54bdee70580abfce02e1255eefca84974e6 assets/cargo_hologram/models/block/remote_craft_table.json

@@ -26,7 +26,7 @@ import org.apache.http.util.Asserts
 import java.util.*
 
 class CraftMenu(containerId: Int, val playerInv: Inventory) :
-    AbstractContainerMenu(AllRegisters.CRAFTER_MANU.get(), containerId) {
+    AbstractContainerMenu(AllRegisters.Menus.CRAFTER_MANU.get(), containerId) {
 
     val materialHandle = ItemStackHandler(9)
     val resultHandle = ItemStackHandler(1)

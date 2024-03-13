@@ -21,9 +21,12 @@ import java.util.function.Predicate
 
 sealed class ItemTrait : Predicate<ItemStack> {
 
-    open fun rawDescription(itemStack: ItemStack): String = TODO()
-    open fun description(itemStack: ItemStack): Component = rawDescription(itemStack).literal()
+    protected open fun rawDescription(pass: Boolean): String = throw NotImplementedError()
+    open fun description(itemStack: ItemStack): Component = description(test(itemStack))
+    open fun description(pass: Boolean): Component = rawDescription(pass).literal()
     open fun additionData(tag: CompoundTag) {}
+    open fun shouldReplace(trait : ItemTrait) = this::class.java == trait::class.java
+    fun writeToItem(itemStack: ItemStack) = writeToNbt(itemStack.orCreateTag)
     fun writeToNbt(tag: CompoundTag) {
         val innerTag = CompoundTag()
         innerTag.putString(COMPOUND_TYPE_KEY, this::class.java.simpleName)
@@ -37,88 +40,96 @@ sealed class ItemTrait : Predicate<ItemStack> {
 
     data object Stackable : ItemTrait() {
         override fun test(item: ItemStack): Boolean = item.isStackable
-        override fun rawDescription(itemStack: ItemStack): String = if (test(itemStack)) "stackable" else "un-stackable"
+        override fun rawDescription(pass: Boolean): String = if (pass) "stackable" else "un-stackable"
     }
 
 
     data object Placeable : ItemTrait() {
         override fun test(item: ItemStack): Boolean = item.item is BlockItem
-        override fun rawDescription(itemStack: ItemStack): String = if (test(itemStack)) "can be placed as a Block"
+        override fun rawDescription(pass: Boolean): String = if (pass) "can be placed as a Block"
         else "can't be places as a Block"
     }
 
     data object Edible : ItemTrait() {
         override fun test(item: ItemStack): Boolean = item.isEdible
-        override fun rawDescription(itemStack: ItemStack): String = if (test(itemStack)) "is food" else "is not food"
+        override fun rawDescription(pass: Boolean): String = if (pass) "is food" else "is not food"
     }
 
     data object FluidContainer : ItemTrait() {
         override fun test(item: ItemStack): Boolean = item.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).isPresent
 
-        override fun rawDescription(itemStack: ItemStack): String =
-            if (test(itemStack)) "can contain fluid" else "can't contain fluid"
+        override fun rawDescription(pass: Boolean): String =
+            if (pass) "can contain fluid" else "can't contain fluid"
     }
 
     data object Enchanted : ItemTrait() {
         override fun test(item: ItemStack): Boolean = item.isEnchanted
-        override fun rawDescription(itemStack: ItemStack): String =
-            if (test(itemStack)) "enchanted" else "not enchanted"
+        override fun rawDescription(pass: Boolean): String =
+            if (pass) "enchanted" else "not enchanted"
     }
 
     data object MaxEnchanted : ItemTrait() {
         override fun test(item: ItemStack): Boolean =
             EnchantmentHelper.getEnchantments(item).asSequence().any { (enchant, level) -> level == enchant.maxLevel }
 
-        override fun rawDescription(itemStack: ItemStack): String =
-            if (test(itemStack)) "max enchanted" else "not max enchanted"
+        override fun rawDescription(pass: Boolean): String =
+            if (pass) "max enchanted" else "not max enchanted"
     }
 
     data object CustomName : ItemTrait() {
         override fun test(item: ItemStack): Boolean = item.hasCustomHoverName()
 
-        override fun rawDescription(itemStack: ItemStack): String =
-            if (test(itemStack)) "have custom name" else "not have custom name"
+        override fun rawDescription(pass: Boolean): String =
+            if (pass) "have custom name" else "not have custom name"
     }
 
     data object Damaged : ItemTrait() {
         override fun test(item: ItemStack): Boolean = item.isDamaged
-        override fun rawDescription(itemStack: ItemStack): String =
-            if (test(itemStack)) "damaged" else "not damaged"
+        override fun rawDescription(pass: Boolean): String =
+            if (pass) "damaged" else "not damaged"
     }
 
     data object Damageable : ItemTrait() {
         override fun test(item: ItemStack): Boolean = item.isDamageableItem
-        override fun rawDescription(itemStack: ItemStack): String =
-            if (test(itemStack)) "damageable" else "un-damageable"
+        override fun rawDescription(pass: Boolean): String =
+            if (pass) "damageable" else "un-damageable"
     }
 
     data object Equipable : ItemTrait() {
         override fun test(item: ItemStack): Boolean =
             LivingEntity.getEquipmentSlotForItem(item).type == EquipmentSlot.Type.ARMOR
 
-        override fun rawDescription(itemStack: ItemStack): String =
-            if (test(itemStack)) "equipment" else "not equipment"
+        override fun rawDescription(pass: Boolean): String =
+            if (pass) "equipment" else "not equipment"
     }
 
     data object FurnaceFuel : ItemTrait() {
         override fun test(item: ItemStack): Boolean = AbstractFurnaceBlockEntity.isFuel(item)
 
-        override fun rawDescription(itemStack: ItemStack): String =
-            if (test(itemStack)) "can be used as furnace fuel" else "can't be used as furnace fuel"
+        override fun rawDescription(pass: Boolean): String =
+            if (pass) "can be used as furnace fuel" else "can't be used as furnace fuel"
     }
 
     class ItemGroup(val tab: CreativeModeTab) : ItemTrait() {
         override fun test(item: ItemStack): Boolean = tab.contains(item)
-        override fun description(itemStack: ItemStack): Component =
-            if (test(itemStack)) "under tab:".literal() + tab.displayName else "not under tab".literal() + tab.displayName
+        override fun description(pass: Boolean): Component =
+            if (pass) "under tab:".literal() + tab.displayName else "not under tab".literal() + tab.displayName
 
         override fun additionData(tag: CompoundTag) {
             tag.putString(COMPOUND_DATA_KEY, BuiltInRegistries.CREATIVE_MODE_TAB.getKey(tab)!!.toString())
         }
 
+        override fun shouldReplace(trait: ItemTrait): Boolean =
+            trait is ItemGroup && trait.tab == this.tab
+
         companion object {
             fun fromItem(itemStack: ItemStack): List<ItemGroup> =
-                CreativeModeTabs.tabs().asSequence().filter { it.contains(itemStack) }.map(::ItemGroup).toList()
+                CreativeModeTabs.tabs()
+                    .asSequence()
+                    .filterNot { it != CreativeModeTabs.searchTab() }
+                    .filter { it.contains(itemStack) }
+                    .map(::ItemGroup)
+                    .toList()
 
             fun fromTag(tag: CompoundTag): ItemGroup {
                 val string = tag.getString(COMPOUND_DATA_KEY)
@@ -130,11 +141,14 @@ sealed class ItemTrait : Predicate<ItemStack> {
 
     class ItemTag(val itemTag: TagKey<Item>) : ItemTrait() {
         override fun test(item: ItemStack): Boolean = item.`is`(itemTag)
-        override fun rawDescription(itemStack: ItemStack): String =
-            if (test(itemStack)) "have tag:${itemTag.location}" else "not have tag:${itemTag.location}"
+        override fun rawDescription(pass: Boolean): String =
+            if (pass) "have tag:${itemTag.location}" else "not have tag:${itemTag.location}"
 
         override fun additionData(tag: CompoundTag) =
             tag.putString(COMPOUND_DATA_KEY, itemTag.location.toString())
+
+        override fun shouldReplace(trait: ItemTrait): Boolean =
+            trait is ItemTag && trait.itemTag.location == this.itemTag.location
 
         companion object {
             fun fromItem(itemStack: ItemStack): List<ItemTag> = itemStack.tags.map(::ItemTag).toList()
@@ -149,11 +163,14 @@ sealed class ItemTrait : Predicate<ItemStack> {
     class ModId(val modId: String) : ItemTrait() {
         override fun test(item: ItemStack): Boolean = Objects.equals(item.item.getCreatorModId(item), modId)
 
-        override fun rawDescription(itemStack: ItemStack): String =
-            if (test(itemStack)) "added by mod:$modId" else "not added by mod:$modId"
+        override fun rawDescription(pass: Boolean): String =
+            if (pass) "added by mod:$modId" else "not added by mod:$modId"
 
         override fun additionData(tag: CompoundTag) =
             tag.putString(COMPOUND_DATA_KEY, modId)
+
+        override fun shouldReplace(trait: ItemTrait): Boolean =
+            trait is ModId && trait.modId == this.modId
 
         companion object {
             fun fromItem(itemStack: ItemStack): ModId? {
@@ -177,11 +194,14 @@ sealed class ItemTrait : Predicate<ItemStack> {
             return false
         }
 
-        override fun rawDescription(itemStack: ItemStack): String =
-            if (test(itemStack)) "dye color:${color.getName()}" else "not dye color:${color.getName()}"
+        override fun rawDescription(pass: Boolean): String =
+            if (pass) "dye color:${color.getName()}" else "not dye color:${color.getName()}"
 
         override fun additionData(tag: CompoundTag) =
             tag.putByte(COMPOUND_DATA_KEY, color.id.toByte())
+
+        override fun shouldReplace(trait: ItemTrait): Boolean =
+            trait is Color && trait.color == this.color
 
         companion object {
             fun fromItem(itemStack: ItemStack): Color? {
@@ -195,14 +215,17 @@ sealed class ItemTrait : Predicate<ItemStack> {
     }
 
     class EquipSlot(val slot: EquipmentSlot) : ItemTrait() {
-        override fun rawDescription(itemStack: ItemStack): String =
-            if (test(itemStack)) "equip on ${slot.getName()}" else "not equip on ${slot.getName()}"
+        override fun rawDescription(pass: Boolean): String =
+            if (pass) "equip on ${slot.getName()}" else "not equip on ${slot.getName()}"
 
         override fun test(item: ItemStack): Boolean =
             LivingEntity.getEquipmentSlotForItem(item) == slot
 
         override fun additionData(tag: CompoundTag) =
             tag.putByte(COMPOUND_DATA_KEY, slot.ordinal.toByte())
+
+        override fun shouldReplace(trait: ItemTrait): Boolean =
+            trait is EquipSlot && trait.slot == this.slot
 
         companion object {
             fun fromItem(itemStack: ItemStack) =
@@ -214,8 +237,8 @@ sealed class ItemTrait : Predicate<ItemStack> {
     }
 
     class ToolType(val type: TagKey<Block>) : ItemTrait() {
-        override fun rawDescription(itemStack: ItemStack): String =
-            if (test(itemStack)) "tool type:${type.location}" else "not tool type:${type.location}"
+        override fun rawDescription(pass: Boolean): String =
+            if (pass) "tool type:${type.location}" else "not tool type:${type.location}"
 
         override fun test(item: ItemStack): Boolean {
             val actualItem = item.item
@@ -224,6 +247,9 @@ sealed class ItemTrait : Predicate<ItemStack> {
 
         override fun additionData(tag: CompoundTag) =
             tag.putString(COMPOUND_DATA_KEY, type.location.toString())
+
+        override fun shouldReplace(trait: ItemTrait): Boolean =
+            trait is ToolType && trait.type.location == this.type.location
 
         companion object {
             fun fromItem(item: ItemStack) =
@@ -296,14 +322,7 @@ sealed class ItemTrait : Predicate<ItemStack> {
 
         fun readItemTrait(item: ItemStack) = readItemTrait(item.tag!!)
 
-        fun haveItemTrait(item : ItemStack): Boolean {
-            val tag = item.tag ?: return false
-            return tag.contains(COMPOUND_NAME)
-        }
-
-        fun removeTag(filterItem: ItemStack) {
-            val tag = filterItem.tag ?: return
-            tag.remove(COMPOUND_NAME)
-        }
+        fun tag(itemStack: ItemStack) = tag(itemStack.tag!!)
+        fun tag(tag: CompoundTag) = tag.getCompound(COMPOUND_NAME)
     }
 }

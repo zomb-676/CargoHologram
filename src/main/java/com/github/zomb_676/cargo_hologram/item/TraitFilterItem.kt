@@ -1,7 +1,7 @@
 package com.github.zomb_676.cargo_hologram.item
 
 import com.github.zomb_676.cargo_hologram.ui.FilterMenu
-import com.github.zomb_676.cargo_hologram.util.filter.ItemTrait
+import com.github.zomb_676.cargo_hologram.util.filter.TraitList
 import com.github.zomb_676.cargo_hologram.util.literal
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
@@ -17,7 +17,7 @@ import net.minecraft.world.item.TooltipFlag
 import net.minecraft.world.level.Level
 import net.minecraftforge.network.NetworkHooks
 
-class ItemFilter : Item(Properties().stacksTo(1)) {
+class TraitFilterItem : Item(Properties().stacksTo(1)) {
     override fun use(pLevel: Level, pPlayer: Player, pUsedHand: InteractionHand): InteractionResultHolder<ItemStack> {
         if (!pLevel.isClientSide) {
             NetworkHooks.openScreen(pPlayer as ServerPlayer, object : MenuProvider {
@@ -39,11 +39,17 @@ class ItemFilter : Item(Properties().stacksTo(1)) {
         pTooltipComponents: MutableList<Component>,
         pIsAdvanced: TooltipFlag,
     ) {
-        if (ItemTrait.haveItemTrait(pStack)) {
-            val trait = ItemTrait.readItemTrait(pStack)
-            pTooltipComponents.add(trait.description(pStack))
+        if (TraitList.contains(pStack)) {
+            val traits = TraitList()
+            traits.readFromItem(pStack)
+            pTooltipComponents.add("Mode:${traits.mode}".literal())
+            for (trait in traits) {
+                pTooltipComponents.add(trait.description)
+            }
+        } else {
+            pTooltipComponents.add("Not Set".literal())
         }
     }
 
-    override fun isFoil(pStack: ItemStack): Boolean = ItemTrait.haveItemTrait(pStack)
+    override fun isFoil(pStack: ItemStack): Boolean = TraitList.contains(pStack)
 }

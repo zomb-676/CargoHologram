@@ -21,12 +21,10 @@ object GlobalFilter {
     var globalSelectors: List<Selector> = emptyList()
         private set
 
-    private fun isChestWithLoot(blockEntity: BlockEntity): Boolean {
+    private fun isChestWithLoot(blockEntity: BlockEntity): Boolean =
         if (blockEntity is RandomizableContainerBlockEntityAccessor) {
-            return blockEntity.lootTable != null
-        }
-        return true
-    }
+            blockEntity.lootTable != null
+        } else false
 
     fun filterBlockEntity(blockEntity: BlockEntity): Boolean {
         if (!allowLootChest) {

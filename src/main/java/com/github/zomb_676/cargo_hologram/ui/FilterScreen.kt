@@ -9,6 +9,8 @@ import com.github.zomb_676.cargo_hologram.util.assign
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
 import com.github.zomb_676.cargo_hologram.util.fillRelative
 import com.github.zomb_676.cargo_hologram.util.filter.ItemTrait
+import com.github.zomb_676.cargo_hologram.util.filter.SpecifiedItemTrait
+import com.github.zomb_676.cargo_hologram.util.filter.TraitList
 import com.github.zomb_676.cargo_hologram.util.literal
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
@@ -34,10 +36,11 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
     private var traitIndex = -1
     private var data: List<ItemTrait> = mutableListOf()
     private var toSetTrait = -1
+    private var isDeleteMode = false
 
     override fun init() {
         super.init()
-        topPos = min(20, (topPos * 0.6).toInt())
+        topPos = (height - 216) / 2
         mainArea = AreaImmute.ofRelative(leftPos, topPos, 176, 216).asAreaImmute()
         modeCheckBox = CargoCheckBox.ofExplicit()
         addRenderableWidget(modeCheckBox)
@@ -61,6 +64,7 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
         this.hoveredSlot = null
         this.hoverOnCandidate = false
         this.traitIndex = -1
+        this.isDeleteMode = false
         menu.slots.forEach { slot ->
             val x = slot.x + leftPos
             val y = slot.y + topPos
@@ -98,19 +102,27 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
         draw.downUp(80).inner(3)
         draw.outline(ARGBColor.Vanilla.WHITE)
         draw.inner(2)
+        val displayAlready: Boolean
+        val traits = TraitList().apply { readFromItem(menu.playerInv.getSelected()) }
         draw.assignUp(22).draw(pGuiGraphics) { draw ->
             draw.outline(ARGBColor.Vanilla.WHITE)
             draw.assignLeft(22)
             if (candidate.isEmpty) {
                 draw.centeredString("place item to specific")
-                return
+                if (!TraitList.contains(menu.playerInv.getSelected())) return
+                if (traits.traits.isNotEmpty()) {
+                    displayAlready = true
+                    this.isDeleteMode = true
+                } else return
             } else {
                 data = this.collectAvailableForItemStack(candidate)
                 draw.centeredString("find ${data.size} trait")
+                displayAlready = false
             }
         }
+
         val showCount = (draw.height) / (2 + 14)
-        val dataCount = data.size
+        val dataCount = if (displayAlready) traits.traits.size else data.size
         draw.assignRight(8).draw(pGuiGraphics) { draw ->
             draw.inner(1)
             draw.outline(ARGBColor.Presets.WHITE)
@@ -129,21 +141,30 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
         draw.upDown((draw.height - showCount * (2 + 14)) / 2)
         repeat(min(showCount, dataCount)) { index ->
             draw.upDown(2).assignUp(14).draw(pGuiGraphics) { draw ->
+                val queryIndex = currentTopIndex + index
                 if (draw.inRange(pMouseX, pMouseY)) {
-                    this.traitIndex = currentTopIndex + index
+                    this.traitIndex = queryIndex
                 }
                 draw.outline(ARGBColor.Vanilla.WHITE)
-                if (this.toSetTrait == currentTopIndex + index) {
+
+                if (this.isDeleteMode && draw.inRange(pMouseX, pMouseY)) {
+                    draw.inner(2)
+                    draw.fill(ARGBColor.Vanilla.WHITE.alpha(0x55))
+                    draw.expand(2)
+                } else if (!this.isDeleteMode && this.toSetTrait == queryIndex) {
                     draw.inner(2)
                     draw.fill(ARGBColor.Vanilla.WHITE.alpha(0x55))
                     draw.expand(2)
                 }
-                val current = data[currentTopIndex + index]
+                val current =
+                    if (displayAlready) traits.traits[queryIndex].description else data[queryIndex].description(
+                        candidate
+                    )
                 draw.assignLeft(16).draw(pGuiGraphics) { draw ->
-                    draw.centeredString((currentTopIndex + index + 1).toString())
+                    draw.centeredString((queryIndex + 1).toString())
                 }
                 draw.innerX(2)
-                draw.scrollingString(current.description(candidate), ARGBColor.Presets.WHITE)
+                draw.scrollingString(current, ARGBColor.Presets.WHITE)
             }
         }
 
@@ -158,8 +179,8 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
             if (draw.inRange(pMouseX, pMouseY)) {
                 val tooltip = when (modeCheckBox.state) {
                     CargoCheckBox.State.DEFAULT -> throw RuntimeException()
-                    CargoCheckBox.State.BANNED -> "BlackMode"
-                    CargoCheckBox.State.CHECKED -> "WhiteMode"
+                    CargoCheckBox.State.BANNED -> "Opposite"
+                    CargoCheckBox.State.CHECKED -> "Same"
                 }.literal()
                 draw.tooltipComponent(pMouseX, pMouseY, tooltip)
                 draw.inner(2)
@@ -170,7 +191,7 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
             setButton.assign(draw.cursor)
             draw.outline(ARGBColor.Presets.WHITE)
             if (draw.inRange(pMouseX, pMouseY)) {
-                draw.tooltipComponent(pMouseX, pMouseY, "Save".literal())
+                draw.tooltipComponent(pMouseX, pMouseY, "Add".literal())
                 draw.inner(2)
                 draw.fill(ARGBColor.Presets.WHITE.alpha(0x55))
             }
@@ -180,7 +201,7 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
             clearButton.assign(draw.cursor)
             draw.outline(ARGBColor.Presets.WHITE)
             if (draw.inRange(pMouseX, pMouseY)) {
-                draw.tooltipComponent(pMouseX, pMouseY, "Clear Set".literal())
+                draw.tooltipComponent(pMouseX, pMouseY, "Clear All Set".literal())
                 draw.inner(2)
                 draw.fill(ARGBColor.Presets.WHITE.alpha(0x55))
             }
@@ -208,14 +229,33 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
 
     override fun mouseClicked(pMouseX: Double, pMouseY: Double, pButton: Int): Boolean {
         if (traitIndex != -1) {
-            toSetTrait = traitIndex
-            return true
+            if (this.isDeleteMode) {
+                val traitList = TraitList().apply { readFromItem(menu.playerInv.getSelected()) }
+                traitList.traits.removeAt(traitIndex)
+                SetFilterPack(traitList).sendToServer()
+                return true
+            } else {
+                toSetTrait = traitIndex
+                return true
+            }
         }
         return super.mouseClicked(pMouseX, pMouseY, pButton)
     }
 
     private fun sendSetTraitPack() {
         val trait = data.getOrNull(toSetTrait) ?: return
-        SetFilterPack(trait).sendToServer()
+        var mode = trait.test(menu.candidateSlot.item)
+        if (modeCheckBox.state == CargoCheckBox.State.BANNED) mode = !mode
+        val specifiedItemTrait = SpecifiedItemTrait(mode, trait)
+        val filter = menu.playerInv.getSelected()
+        val traitList = if (TraitList.contains(filter)) {
+            val list = TraitList()
+            list.deserializeNBT(filter.tag!!)
+            list
+        } else {
+            TraitList()
+        }
+        traitList.appendTrait(specifiedItemTrait)
+        SetFilterPack(traitList).sendToServer()
     }
 }

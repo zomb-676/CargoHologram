@@ -13,11 +13,10 @@ import net.minecraftforge.items.ItemStackHandler
 import net.minecraftforge.items.SlotItemHandler
 
 class FilterMenu(containerId: Int, val playerInv: Inventory) :
-    AbstractContainerMenu(AllRegisters.FILTER_MANU.get(), containerId) {
+    AbstractContainerMenu(AllRegisters.Menus.FILTER_MANU.get(), containerId) {
 
     val candidateHandle = ItemStackHandler(1)
     val candidateSlot: Slot = SlotItemHandler(candidateHandle, 0, 8, 8)
-    val filterItem: ItemStack
 
     override fun quickMoveStack(pPlayer: Player, pIndex: Int): ItemStack {
         val slot = this.slots[pIndex]
@@ -34,9 +33,6 @@ class FilterMenu(containerId: Int, val playerInv: Inventory) :
     init {
         createInventorySlots(playerInv)
         addSlot(candidateSlot)
-        filterItem = playerInv.player.mainHandItem
-        if (filterItem.item != AllRegisters.Items.itemFilter.get())
-            log { error("Filter Menu opened with Filter Item not in hand") }
     }
 
     private fun createInventorySlots(pInventory: Inventory) {
@@ -72,5 +68,6 @@ class FilterMenu(containerId: Int, val playerInv: Inventory) :
         super.clicked(pSlotId, pButton, pClickType, pPlayer)
     }
 
-    override fun stillValid(pPlayer: Player): Boolean = playerInv.getSelected() == filterItem
+    override fun stillValid(pPlayer: Player): Boolean = playerInv.getSelected()
+        .item == (AllRegisters.Items.traitFilter.get())
 }

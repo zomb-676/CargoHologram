@@ -45,9 +45,13 @@ object CargoHologramDataGenerator : BusSubscribe {
                 crafter.useItemModel(Items.DIAMOND)
                 cargoFilter.useItemModel(Items.DIAMOND)
                 panel.useItemModel(Items.DIAMOND)
-                itemFilter.useItemModel(Items.NAME_TAG)
+                traitFilter.useItemModel(Items.NAME_TAG)
+                listFilter.useItemModel(Items.NAME_TAG)
                 configureUISTick.useItemModel(Items.DEBUG_STICK)
                 remoteCraftTableItem.useItemModel(Items.CRAFTING_TABLE)
+                cargoStorageItem.useItemModel(Items.BARREL)
+                cargoInserter.useItemModel(Items.HOPPER)
+                linker.useItemModel(Items.ECHO_SHARD)
             }
         }
 
@@ -84,6 +88,8 @@ object CargoHologramDataGenerator : BusSubscribe {
         override fun registerModels() {
             AllRegisters.Blocks.apply {
                 remoteCraftTable.useBlockModel(Blocks.CRAFTING_TABLE)
+                cargoStorage.useBlockModel(Blocks.BARREL)
+                cargoInserter.useBlockModel(Blocks.HOPPER)
             }
         }
 
@@ -103,6 +109,8 @@ object CargoHologramDataGenerator : BusSubscribe {
         override fun registerStatesAndModels() {
             AllRegisters.Blocks.apply {
                 remoteCraftTable.selfSingleState()
+                cargoStorage.selfSingleState()
+                cargoInserter.selfSingleState()
             }
         }
 
@@ -123,11 +131,15 @@ object CargoHologramDataGenerator : BusSubscribe {
                 crafter.lang("Crafter")
                 cargoFilter.lang("Cargo Filter")
                 panel.lang("Monitor Panel")
-                itemFilter.lang("Item Filter")
+                traitFilter.lang("Item Trait Filter")
+                listFilter.lang("List Filter")
                 configureUISTick.lang("Configure UI stick")
+                linker.lang("Linker")
             }
             AllRegisters.Blocks.apply {
                 remoteCraftTable.lang("RemoteCraftTable")
+                cargoStorage.lang("Cargo Storage")
+                cargoInserter.lang("Cargo Inserter")
             }
             AllTranslates.apply {
                 MOD_TAB.lang(CargoHologram.MOD_NAME)

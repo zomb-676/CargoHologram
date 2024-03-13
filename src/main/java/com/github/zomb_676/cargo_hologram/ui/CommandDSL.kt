@@ -49,7 +49,7 @@ value class CommandDSL<S>(
                     block(context)
                     return@executes Command.SINGLE_SUCCESS
                     //so no need to return Command.SINGLE_SUCCESS manually
-                    //can just wirite code and just throw when error happended
+                    //can just write code and just throw when error happened
                 } catch (e: Exception) {
                     CargoHologram.LOGGER.error("error while executing commands", e)
                     return@executes 2

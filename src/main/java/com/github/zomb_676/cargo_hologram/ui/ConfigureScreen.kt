@@ -56,7 +56,7 @@ class ConfigureScreen : Screen("Configure".literal()), CargoBlurScreen {
         draw.upDown(3)
         draw.assignUp(15).draw(pGuiGraphics) { draw ->
             draw.assignRight(120).assignRight(15, blurOutline::assign)
-            draw.centeredString("blur bg alpha")
+            draw.centeredString("blur bg outline")
         }
         super.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick)
     }

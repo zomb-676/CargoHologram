@@ -1,7 +1,6 @@
 package com.github.zomb_676.cargo_hologram.network
 
 import com.github.zomb_676.cargo_hologram.CargoHologram
-import com.github.zomb_676.cargo_hologram.SetSlotPacket
 import com.github.zomb_676.cargo_hologram.util.log
 import com.github.zomb_676.cargo_hologram.util.onDev
 import com.github.zomb_676.cargo_hologram.util.optional

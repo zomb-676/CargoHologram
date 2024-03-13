@@ -12,11 +12,9 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
 import net.minecraft.core.BlockPos
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.player.Inventory
-import net.minecraft.world.item.ItemStack
 import java.util.*
 import kotlin.math.ceil
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.sign
 
 class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
@@ -25,7 +23,7 @@ class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
     private var currentRowIndex = 0
     private val materialAreas = MutableList(9) { _ -> AreaImmute.ofFullScreen() }
     var hovered: Pair<BlockPos, SlotItemStack>? = null
-    var area : AreaImmute? = null
+    var area: AreaImmute? = null
 
     var mainArea: AreaImmute = AreaImmute.ofFullScreen()
         private set
@@ -33,7 +31,7 @@ class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
     override fun init() {
         super.init()
         this.leftPos -= 25
-        this.topPos = min(20, (topPos * 0.6).toInt())
+        this.topPos = (height - 216) / 2
         mainArea = AreaImmute.ofRelative(leftPos, topPos, 176 + 59, 216).asAreaImmute()
     }
 

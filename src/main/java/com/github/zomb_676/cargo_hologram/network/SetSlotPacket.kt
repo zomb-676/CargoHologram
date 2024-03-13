@@ -1,6 +1,5 @@
-package com.github.zomb_676.cargo_hologram
+package com.github.zomb_676.cargo_hologram.network
 
-import com.github.zomb_676.cargo_hologram.network.NetworkPack
 import com.github.zomb_676.cargo_hologram.ui.CraftMenu
 import com.github.zomb_676.cargo_hologram.ui.FilterMenu
 import com.github.zomb_676.cargo_hologram.util.location

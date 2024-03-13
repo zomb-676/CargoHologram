@@ -1,2 +1,4 @@
-// 1.20.1	2024-03-11T18:56:14.6896002	Block States: cargo_hologram
+// 1.20.1	2024-03-13T14:26:48.6065874	Block States: cargo_hologram
+c4add38bdae96ca5960659a37b3c5284d885c2ef assets/cargo_hologram/blockstates/cargo_inserter.json
+af93d33df1ca275f3905bb55ef7bf716e4c88695 assets/cargo_hologram/blockstates/cargo_storage.json
 1f48de216d89a313d420445ef1f37e78e1e06018 assets/cargo_hologram/blockstates/remote_craft_table.json

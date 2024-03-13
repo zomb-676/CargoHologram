@@ -20,6 +20,7 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.ItemLike
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.block.Block
 import net.minecraftforge.api.distmarker.Dist
 import net.minecraftforge.fml.DistExecutor
 import net.minecraftforge.fml.loading.FMLEnvironment
@@ -177,6 +178,8 @@ fun BlockPos.sectionX() = SectionPos.blockToSectionCoord(this.x)
 fun BlockPos.sectionY() = SectionPos.blockToSectionCoord(this.y)
 fun BlockPos.sectionZ() = SectionPos.blockToSectionCoord(this.z)
 fun BlockPos.toChunkPos() = ChunkPos(this)
+
+fun Long.toBlockPos() = BlockPos.of(this)
 
 fun <T> ResourceLocation.query(registries: IForgeRegistry<T>) = registries.getValue(this)!!
 fun <T> T.location(registries: IForgeRegistry<T>) = registries.getKey(this)!!

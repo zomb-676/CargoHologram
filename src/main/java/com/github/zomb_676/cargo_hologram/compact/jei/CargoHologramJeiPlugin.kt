@@ -2,12 +2,9 @@ package com.github.zomb_676.cargo_hologram.compact.jei
 
 import com.github.zomb_676.cargo_hologram.AllRegisters
 import com.github.zomb_676.cargo_hologram.CargoHologram
-import com.github.zomb_676.cargo_hologram.SetSlotPacket
+import com.github.zomb_676.cargo_hologram.network.SetSlotPacket
 import com.github.zomb_676.cargo_hologram.network.TransformRecipePack
-import com.github.zomb_676.cargo_hologram.ui.CraftMenu
-import com.github.zomb_676.cargo_hologram.ui.CraftScreen
-import com.github.zomb_676.cargo_hologram.ui.FilterScreen
-import com.github.zomb_676.cargo_hologram.ui.MonitorScreen
+import com.github.zomb_676.cargo_hologram.ui.*
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
 import com.github.zomb_676.cargo_hologram.util.optional
 import mezz.jei.api.IModPlugin
@@ -43,7 +40,7 @@ class CargoHologramJeiPlugin : IModPlugin {
     override fun registerRecipeTransferHandlers(registration: IRecipeTransferRegistration) {
         registration.addUniversalRecipeTransferHandler(object : IRecipeTransferHandler<CraftMenu, CraftingRecipe> {
             override fun getContainerClass(): Class<out CraftMenu> = CraftMenu::class.java
-            override fun getMenuType(): Optional<MenuType<CraftMenu>> = AllRegisters.CRAFTER_MANU.get().optional()
+            override fun getMenuType(): Optional<MenuType<CraftMenu>> = AllRegisters.Menus.CRAFTER_MANU.get().optional()
             override fun getRecipeType(): RecipeType<CraftingRecipe> = RecipeTypes.CRAFTING
 
             override fun transferRecipe(
@@ -74,6 +71,9 @@ class CargoHologramJeiPlugin : IModPlugin {
             screen.mainArea.asIGuiProperties(screen)
         }
         registration.addGuiScreenHandler(CraftScreen::class.java) { screen ->
+            screen.mainArea.asIGuiProperties(screen)
+        }
+        registration.addGuiScreenHandler(CargoStorageScreen::class.java) { screen ->
             screen.mainArea.asIGuiProperties(screen)
         }
         registration.addGhostIngredientHandler(CraftScreen::class.java, object : IGhostIngredientHandler<CraftScreen> {
