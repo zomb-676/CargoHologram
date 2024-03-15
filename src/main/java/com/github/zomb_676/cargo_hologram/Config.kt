@@ -61,7 +61,7 @@ data object Config : BusSubscribe {
 
         override fun registerEvent(dispatcher: Dispatcher) {
             ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, SPEC)
-            dispatcher<_>(::onLoad)
+            dispatcher<ModConfigEvent> { event -> onLoad(event) }
         }
 
         var enableDebug: Boolean = isOnDev()
@@ -82,6 +82,7 @@ data object Config : BusSubscribe {
             private set
 
         private fun onLoad(@Suppress("UNUSED_PARAMETER") event: ModConfigEvent) {
+            if (event.config.type != ModConfig.Type.SERVER) return
             enableDebug = enableDebug or ENABLE_DEBUG.get()
 
             maxMonitorRadius = MAXIMUM_MONITOR_RADIUS.get()
@@ -121,13 +122,14 @@ data object Config : BusSubscribe {
 
         override fun registerEvent(dispatcher: Dispatcher) {
             ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, SPEC)
-            dispatcher<_>(::onLoad)
+            dispatcher<ModConfigEvent> { event -> onLoad(event) }
         }
 
         var blurType = CargoBlurScreen.BlurType.SELF
             private set
 
         private fun onLoad(@Suppress("UNUSED_PARAMETER") event: ModConfigEvent) {
+            if (event.config.type != ModConfig.Type.CLIENT) return
             this.blurType = BLUR_TYPE.get()
             BlurConfigure.blurRadius = BLUR_RADIUS.get().toFloat()
             BlurConfigure.blurExpandY = BLUR_EXPAND_Y.get()
@@ -144,6 +146,7 @@ data object Config : BusSubscribe {
     }
 
     override fun registerEvent(dispatcher: Dispatcher) {
-        arrayOf(Server, Client).dispatch()
+        Server.dispatch()
+        runOnDistClient { { Client.dispatch() } }
     }
 }
