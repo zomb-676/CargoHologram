@@ -12,10 +12,7 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.Items
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.Blocks
-import net.minecraftforge.client.model.generators.BlockModelProvider
-import net.minecraftforge.client.model.generators.BlockStateProvider
-import net.minecraftforge.client.model.generators.ItemModelProvider
-import net.minecraftforge.client.model.generators.ModelFile
+import net.minecraftforge.client.model.generators.*
 import net.minecraftforge.common.data.LanguageProvider
 import net.minecraftforge.data.event.GatherDataEvent
 import net.minecraftforge.registries.ForgeRegistries
@@ -50,7 +47,7 @@ object CargoHologramDataGenerator : BusSubscribe {
                 configureUISTick.useItemModel(Items.DEBUG_STICK)
                 remoteCraftTableItem.useItemModel(Items.CRAFTING_TABLE)
                 cargoStorageItem.useItemModel(Items.BARREL)
-                cargoInserter.useItemModel(Items.HOPPER)
+                cargoInserter.useItemModel(Items.SCULK_SHRIEKER)
                 linker.useItemModel(Items.ECHO_SHARD)
             }
         }
@@ -85,20 +82,29 @@ object CargoHologramDataGenerator : BusSubscribe {
 
     class CargoBlockModelProvider(event: GatherDataEvent) :
         BlockModelProvider(event.generator.packOutput, CargoHologram.MOD_ID, event.existingFileHelper) {
+
+        companion object {
+            val solid = ResourceLocation("solid")
+            val cutout = ResourceLocation("cutout")
+            val cutout_mipped = ResourceLocation("cutout_mipped")
+            val cutout_mipped_all = ResourceLocation("cutout_mipped_all")
+            val translucent = ResourceLocation("translucent")
+        }
+
         override fun registerModels() {
             AllRegisters.Blocks.apply {
                 remoteCraftTable.useBlockModel(Blocks.CRAFTING_TABLE)
                 cargoStorage.useBlockModel(Blocks.BARREL)
-                cargoInserter.useBlockModel(Blocks.HOPPER)
+                cargoInserter.useBlockModel(Blocks.SCULK_SHRIEKER).renderType(cutout)
             }
         }
 
-        private fun RegistryObject<out Block>.useBlockModel(block: Block) {
+        private fun RegistryObject<out Block>.useBlockModel(block: Block): BlockModelBuilder {
             val location = ForgeRegistries.BLOCKS.getKey(this.get())!!
             val useBlockLocation = ForgeRegistries.BLOCKS.getKey(block)!!
             val parentModelLocation = useBlockLocation.withPrefix("block/")
             val parentModelFile = ModelFile.ExistingModelFile(parentModelLocation, existingFileHelper)
-            getBuilder(location.toString())
+            return getBuilder(location.toString())
                 .parent(parentModelFile)
         }
 

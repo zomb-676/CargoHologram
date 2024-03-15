@@ -146,6 +146,13 @@ repositories {
             includeGroup "icyllis.modernui"
         }
     }
+    maven {
+        name "top"
+        url "https://maven.k-4u.nl"
+        content {
+            includeGroup "mcjty.theoneprobe"
+        }
+    }
 }
 
 dependencies {
@@ -193,11 +200,30 @@ dependencies {
     runtimeOnly(fg.deobf("curse.maven:n-237875:4620461"))
     runtimeOnly(fg.deobf("curse.maven:cyclops-core-232758:5080553"))
 
+    def top_version = "1.20.1-10.0.1-3"
+    implementation fg.deobf(project.dependencies.create("mcjty.theoneprobe:theoneprobe:$top_version") {
+        transitive = false
+    })
+
     //modern ui
-    //def modernui_version = "3.10.0"
-    //minecraftLibrary("icyllis.modernui:ModernUI-Core:${modernui_version}")
-    //minecraftLibrary("icyllis.modernui:ModernUI-Markdown:${modernui_version}")
-    //implementation fg.deobf("icyllis.modernui:ModernUI-Forge:${minecraft_version}-${modernui_version}.+")
+    def modernui_version = "3.10.0"
+    minecraftLibrary("icyllis.modernui:ModernUI-Core:${modernui_version}") {
+        exclude group: "org.apache.logging.log4j", module: "log4j-core"
+        exclude group: "org.apache.logging.log4j", module: "log4j-api"
+        exclude group: "com.google.code.findbugs", module: "jsr305"
+        exclude group: "org.jetbrains", module: "annotations"
+        exclude group: "com.ibm.icu", module: "icu4j"
+        exclude group: "it.unimi.dsi", module: "fastutil"
+    }
+    minecraftLibrary("icyllis.modernui:ModernUI-Markdown:${modernui_version}") {
+        exclude group: "org.apache.logging.log4j", module: "log4j-core"
+        exclude group: "org.apache.logging.log4j", module: "log4j-api"
+        exclude group: "com.google.code.findbugs", module: "jsr305"
+        exclude group: "org.jetbrains", module: "annotations"
+        exclude group: "com.ibm.icu", module: "icu4j"
+        exclude group: "it.unimi.dsi", module: "fastutil"
+    }
+    implementation fg.deobf("icyllis.modernui:ModernUI-Forge:${minecraft_version}-${modernui_version}.+")
 
 }
 

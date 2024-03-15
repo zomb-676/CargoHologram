@@ -5,10 +5,8 @@ import com.github.zomb_676.cargo_hologram.item.*
 import com.github.zomb_676.cargo_hologram.store.CargoInserter
 import com.github.zomb_676.cargo_hologram.store.CargoStorage
 import com.github.zomb_676.cargo_hologram.store.blockEntity.CargoStorageBlockEntity
-import com.github.zomb_676.cargo_hologram.ui.CargoStorageMenu
-import com.github.zomb_676.cargo_hologram.ui.ConfigureScreen
-import com.github.zomb_676.cargo_hologram.ui.CraftMenu
-import com.github.zomb_676.cargo_hologram.ui.FilterMenu
+import com.github.zomb_676.cargo_hologram.store.blockEntity.InserterBlockEntity
+import com.github.zomb_676.cargo_hologram.ui.*
 import com.github.zomb_676.cargo_hologram.util.*
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.FriendlyByteBuf
@@ -66,6 +64,12 @@ object AllRegisters : BusSubscribe {
                     CargoStorageMenu(windowId, inv, data.readBlockPos())
             }, FeatureFlags.DEFAULT_FLAGS)
         }
+        val INSERTER_MENU = MENU.register("inserter") {
+            MenuType(object : IContainerFactory<InserterMenu> {
+                override fun create(windowId: Int, inv: Inventory, data: FriendlyByteBuf): InserterMenu =
+                    InserterMenu(windowId, inv, data.readBlockPos())
+            }, FeatureFlags.DEFAULT_FLAGS)
+        }
     }
 
 
@@ -101,6 +105,9 @@ object AllRegisters : BusSubscribe {
     object BlockEntities {
         val cargoStorage = BLOCK_ENTITY.register("cargo_storage") {
             BlockEntityType.Builder.of(::CargoStorageBlockEntity, Blocks.cargoStorage.get()).build(null)
+        }
+        val inserter = BLOCK_ENTITY.register("cargo_inserter") {
+            BlockEntityType.Builder.of(::InserterBlockEntity, Blocks.cargoInserter.get()).build(null)
         }
     }
 

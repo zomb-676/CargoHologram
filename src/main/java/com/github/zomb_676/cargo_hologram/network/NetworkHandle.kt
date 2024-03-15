@@ -111,5 +111,7 @@ object NetworkHandle {
         register(TransformRecipePack::decode, NetworkDirection.PLAY_TO_SERVER)
         register(SetSlotPacket::decode, NetworkDirection.PLAY_TO_SERVER)
         register(SetFilterPack::decode, NetworkDirection.PLAY_TO_SERVER)
+        register(InserterTransformPacket::decode, NetworkDirection.PLAY_TO_SERVER)
+        register(SetPriorityPack::decode, NetworkDirection.PLAY_TO_SERVER)
     }
 }

@@ -12,6 +12,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
 import net.minecraft.core.BlockPos
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.player.Inventory
+import net.minecraft.world.inventory.AbstractContainerMenu
 import java.util.*
 import kotlin.math.ceil
 import kotlin.math.max
@@ -36,7 +37,7 @@ class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
     }
 
     override fun renderBg(pGuiGraphics: GuiGraphics, pPartialTick: Float, pMouseX: Int, pMouseY: Int) {
-        BlurConfigure.render(pGuiGraphics, mainArea)
+        BlurConfigure.render(this, pGuiGraphics, mainArea)
     }
 
     @Suppress("NAME_SHADOWING")
@@ -49,10 +50,22 @@ class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
             val x = slot.x + leftPos
             val y = slot.y + topPos
             pGuiGraphics.fillRelative(x - 1, y - 1, 18, 18, ARGBColor.Presets.GREY.alpha(0x5f))
-            if (!slot.item.isEmpty) {
-                pGuiGraphics.renderItem(slot.item, x, y)
-                pGuiGraphics.renderItemDecorations(minecraft!!.font, slot.item, x, y)
+            var slotItem = slot.item
+            if (isQuickCrafting && !menu.carried.isEmpty && quickCraftSlots.contains(slot)) {
+                val count = AbstractContainerMenu.getQuickCraftPlaceCount(
+                    this.quickCraftSlots,
+                    this.quickCraftingType,
+                    menu.carried
+                )
+                slotItem = if (slotItem.isEmpty) {
+                    menu.carried.copyWithCount(count)
+                } else {
+                    slotItem.copyWithCount(slotItem.count + count)
+                }
+                pGuiGraphics.fillRelative(x - 1, y - 1, 18, 18, ARGBColor.Presets.GREY)
             }
+            pGuiGraphics.renderItem(slotItem, x, y)
+            pGuiGraphics.renderItemDecorations(minecraft!!.font, slotItem, x, y)
             if (this.isHovering(slot.x, slot.y, 16, 16, pMouseX.toDouble(), pMouseY.toDouble())) {
                 this.hoveredSlot = slot
                 pGuiGraphics.fillRelative(x - 1, y - 1, 18, 18, ARGBColor.Presets.GREY)

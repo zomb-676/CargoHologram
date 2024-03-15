@@ -9,7 +9,7 @@ import net.minecraft.client.gui.components.AbstractWidget
 import net.minecraft.client.gui.narration.NarrationElementOutput
 import net.minecraft.resources.ResourceLocation
 
-class CargoButton private constructor(
+open class CargoButton protected constructor(
     private val normal: ResourceLocation,
     private val hover: ResourceLocation,
 ) : AbstractWidget(0, 0, 0, 0, "".literal()) {

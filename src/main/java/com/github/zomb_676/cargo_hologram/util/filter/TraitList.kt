@@ -1,15 +1,17 @@
 package com.github.zomb_676.cargo_hologram.util.filter
 
+import com.github.zomb_676.cargo_hologram.util.filter.TraitList.TraitMode.*
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
 import net.minecraft.nbt.Tag
 import net.minecraft.world.item.ItemStack
 import net.minecraftforge.common.util.INBTSerializable
+import java.util.function.Predicate
 
 class TraitList(traits: List<SpecifiedItemTrait>, mode: TraitMode) : INBTSerializable<CompoundTag>,
-    Iterable<SpecifiedItemTrait> {
+    Iterable<SpecifiedItemTrait>, Predicate<ItemStack> {
 
-    constructor() : this(listOf(), TraitMode.PASS_ANY)
+    constructor() : this(listOf(), PASS_ANY)
 
     enum class TraitMode {
         PASS_ANY,
@@ -32,8 +34,7 @@ class TraitList(traits: List<SpecifiedItemTrait>, mode: TraitMode) : INBTSeriali
     }
 
     val traits: MutableList<SpecifiedItemTrait> = traits.toMutableList()
-    var mode: TraitMode = TraitMode.PASS_ANY
-        private set
+    var mode: TraitMode = PASS_ANY
 
     override fun serializeNBT(): CompoundTag {
         val tag = CompoundTag()
@@ -81,4 +82,13 @@ class TraitList(traits: List<SpecifiedItemTrait>, mode: TraitMode) : INBTSeriali
     override fun iterator(): Iterator<SpecifiedItemTrait> = traits.iterator()
 
     fun traits(): List<SpecifiedItemTrait> = traits
+
+    override fun test(itemStack: ItemStack): Boolean {
+        if (traits.isEmpty()) return true
+        return when (mode) {
+            PASS_ANY -> traits.any { it.test(itemStack) }
+            PASS_ALL -> traits.all { it.test(itemStack) }
+            PASS_NONE -> traits.none { it.test(itemStack) }
+        }
+    }
 }

@@ -41,7 +41,7 @@ class MonitorScreen : Screen("monitor".literal()), CargoBlurScreen {
 
     @Suppress("NAME_SHADOWING")
     override fun render(pGuiGraphics: GuiGraphics, pMouseX: Int, pMouseY: Int, pPartialTick: Float) {
-        BlurConfigure.render(pGuiGraphics, mainArea)
+        BlurConfigure.render(this, pGuiGraphics, mainArea)
         hovered = null
         val draw = mainArea.asBaseCursor().forDraw(pGuiGraphics)
         draw.outline(ARGBColor.Presets.WHITE)

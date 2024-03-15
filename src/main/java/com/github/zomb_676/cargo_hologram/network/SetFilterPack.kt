@@ -32,11 +32,13 @@ class SetFilterPack(private val trait: Optional<TraitList>) : NetworkPack<SetFil
     }
 
     override fun handle(context: NetworkEvent.Context) {
-        when (val menu = context.sender!!.containerMenu) {
-            is FilterMenu -> {
-                trait.ifPresentOrElse({ t -> t.writeToItem(menu.playerInv.getSelected()) }, {
-                    TraitList.removeTag(menu.playerInv.getSelected())
-                })
+        context.enqueueWork {
+            when (val menu = context.sender!!.containerMenu) {
+                is FilterMenu -> {
+                    trait.ifPresentOrElse({ t -> t.writeToItem(menu.playerInv.getSelected()) }, {
+                        TraitList.removeTag(menu.playerInv.getSelected())
+                    })
+                }
             }
         }
     }

@@ -4,6 +4,7 @@ import com.github.zomb_676.cargo_hologram.network.SetFilterPack
 import com.github.zomb_676.cargo_hologram.ui.component.BlurConfigure
 import com.github.zomb_676.cargo_hologram.ui.widget.CargoButton
 import com.github.zomb_676.cargo_hologram.ui.widget.CargoCheckBox
+import com.github.zomb_676.cargo_hologram.ui.widget.CargoCycleButton
 import com.github.zomb_676.cargo_hologram.util.ARGBColor
 import com.github.zomb_676.cargo_hologram.util.assign
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
@@ -11,12 +12,14 @@ import com.github.zomb_676.cargo_hologram.util.fillRelative
 import com.github.zomb_676.cargo_hologram.util.filter.ItemTrait
 import com.github.zomb_676.cargo_hologram.util.filter.SpecifiedItemTrait
 import com.github.zomb_676.cargo_hologram.util.filter.TraitList
+import com.github.zomb_676.cargo_hologram.util.filter.TraitList.TraitMode
 import com.github.zomb_676.cargo_hologram.util.literal
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
 import net.minecraft.client.renderer.Rect2i
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.player.Inventory
+import net.minecraft.world.inventory.AbstractContainerMenu
 import net.minecraft.world.item.ItemStack
 import java.util.*
 import kotlin.math.max
@@ -32,6 +35,7 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
     private lateinit var modeCheckBox: CargoCheckBox
     private lateinit var setButton: CargoButton
     private lateinit var clearButton: CargoButton
+    private lateinit var modeButton: CargoCycleButton<TraitMode>
 
     private var traitIndex = -1
     private var data: List<ItemTrait> = mutableListOf()
@@ -50,10 +54,12 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
         clearButton = CargoButton.of(UIConstant.Paths.widgetRemove)
             .withListeners { SetFilterPack(Optional.empty()).sendToServer() }
         addRenderableWidget(clearButton)
+        modeButton = CargoCycleButton.of(UIConstant.Paths.buttonSmallDefault)
+        addRenderableWidget(modeButton)
     }
 
     override fun renderBg(pGuiGraphics: GuiGraphics, pPartialTick: Float, pMouseX: Int, pMouseY: Int) {
-        BlurConfigure.render(pGuiGraphics, mainArea)
+        BlurConfigure.render(this, pGuiGraphics, mainArea)
     }
 
     @Suppress("NAME_SHADOWING")
@@ -69,10 +75,22 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
             val x = slot.x + leftPos
             val y = slot.y + topPos
             pGuiGraphics.fillRelative(x - 1, y - 1, 18, 18, ARGBColor.Presets.GREY.alpha(0x5f))
-            if (!slot.item.isEmpty) {
-                pGuiGraphics.renderItem(slot.item, x, y)
-                pGuiGraphics.renderItemDecorations(minecraft!!.font, slot.item, x, y)
+            var slotItem = slot.item
+            if (isQuickCrafting && !menu.carried.isEmpty && quickCraftSlots.contains(slot)) {
+                val count = AbstractContainerMenu.getQuickCraftPlaceCount(
+                    this.quickCraftSlots,
+                    this.quickCraftingType,
+                    menu.carried
+                )
+                slotItem = if (slotItem.isEmpty) {
+                    menu.carried.copyWithCount(count)
+                } else {
+                    slotItem.copyWithCount(slotItem.count + count)
+                }
+                pGuiGraphics.fillRelative(x - 1, y - 1, 18, 18, ARGBColor.Presets.GREY)
             }
+            pGuiGraphics.renderItem(slotItem, x, y)
+            pGuiGraphics.renderItemDecorations(minecraft!!.font, slotItem, x, y)
             if (this.isHovering(slot.x, slot.y, 16, 16, pMouseX.toDouble(), pMouseY.toDouble())) {
                 this.hoveredSlot = slot
                 pGuiGraphics.fillRelative(x - 1, y - 1, 18, 18, ARGBColor.Presets.GREY)
@@ -207,6 +225,23 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
             }
         }
 
+        sideArea.upDown(2).assignUp(18).draw(pGuiGraphics) { draw ->
+            modeButton.assign(draw.cursor)
+            draw.outline(ARGBColor.Presets.WHITE)
+            if (draw.inRange(pMouseX, pMouseY)) {
+                val traitMode = modeButton.currentState()
+                val message = when (traitMode) {
+                    TraitMode.PASS_ANY -> "pass if item satisfy any trait"
+                    TraitMode.PASS_ALL -> "pass only if item satisfy all traits"
+                    TraitMode.PASS_NONE -> "pass only if item satisfy none traits"
+                }.literal()
+                val addition = "if trait is empty, will always pass at any mode".literal()
+                draw.tooltipComponent(pMouseX, pMouseY, listOf(traitMode.toString().literal(),message, addition))
+                draw.inner(2)
+                draw.fill(ARGBColor.Presets.WHITE.alpha(0x55))
+            }
+        }
+
         for (renderable in this.renderables) {
             renderable.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick)
         }
@@ -255,6 +290,7 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
         } else {
             TraitList()
         }
+        traitList.mode = modeButton.currentState()
         traitList.appendTrait(specifiedItemTrait)
         SetFilterPack(traitList).sendToServer()
     }

@@ -1,21 +1,23 @@
 package com.github.zomb_676.cargo_hologram.item
 
-import com.github.zomb_676.cargo_hologram.util.literal
-import com.github.zomb_676.cargo_hologram.util.location
-import com.github.zomb_676.cargo_hologram.util.plus
-import com.github.zomb_676.cargo_hologram.util.toBlockPos
+import com.github.zomb_676.cargo_hologram.util.*
+import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
 import net.minecraft.nbt.Tag
+import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.TooltipFlag
 import net.minecraft.world.item.context.UseOnContext
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.entity.BlockEntity
+import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraftforge.common.capabilities.ForgeCapabilities
 import net.minecraftforge.registries.ForgeRegistries
 
@@ -67,6 +69,7 @@ class LinkerItem : Item(Properties().stacksTo(1)) {
                     COMPOUND_SELECTED_TYPE_KEY,
                     blockEntity.type.location(ForgeRegistries.BLOCK_ENTITY_TYPES).toString()
                 )
+                tag.add(selectedTag)
                 return true
             } else {
                 val selected = tag[index] as CompoundTag
@@ -78,6 +81,19 @@ class LinkerItem : Item(Properties().stacksTo(1)) {
                 return false
             }
         }
+
+        fun linked(itemStack: ItemStack): List<Pair<BlockEntityType<*>, BlockPos>> {
+            if (!isLinking(itemStack)) return emptyList()
+            val tag = itemStack.tag!!.getCompound(COMPOUND_TAG_NAME)
+                .getList(COMPOUND_LIST_TAG_SELECTED_NAME, Tag.TAG_COMPOUND.toInt())
+            return tag.map {
+                (it as CompoundTag).run {
+                    ResourceLocation(getString(COMPOUND_SELECTED_TYPE_KEY)).query(ForgeRegistries.BLOCK_ENTITY_TYPES) to getLong(
+                        COMPOUND_SELECTED_POS_KEY
+                    ).toBlockPos()
+                }
+            }
+        }
     }
 
     override fun use(pLevel: Level, pPlayer: Player, pUsedHand: InteractionHand): InteractionResultHolder<ItemStack> {
@@ -87,7 +103,7 @@ class LinkerItem : Item(Properties().stacksTo(1)) {
         if (pPlayer.isShiftKeyDown) {
             LinkData.setLinking(itemStack, !linking)
             if (!pLevel.isClientSide) {
-                val message = if (linking) {
+                val message = if (!linking) {
                     "begin linking"
                 } else {
                     "end linking, linked ${LinkData.getLinkCount(itemStack)}"
@@ -104,27 +120,46 @@ class LinkerItem : Item(Properties().stacksTo(1)) {
         val pos = pContext.clickedPos
         val blockEntity = level.getBlockEntity(pos)
         val player = pContext.player ?: return InteractionResult.FAIL
+        if (!LinkData.haveTag(pContext.itemInHand)) {
+            LinkData.init(pContext.itemInHand)
+            return InteractionResult.FAIL
+        }
         if (blockEntity == null) {
             val blockState = level.getBlockState(pos)
-            player.sendSystemMessage("clicked at ".literal() + blockState.block.name + " hover, it not have a BlockEntity".literal())
+            if (!level.isClientSide) {
+                player.sendSystemMessage("clicked at ".literal() + blockState.block.name + " hover, it not have a BlockEntity".literal())
+            }
             return InteractionResult.FAIL
         }
         val capability = blockEntity.getCapability(ForgeCapabilities.ITEM_HANDLER)
         if (!capability.isPresent) {
-            player.sendSystemMessage(
-                "clicked at ".literal() + blockEntity.type.location(ForgeRegistries.BLOCK_ENTITY_TYPES).toString()
-                    .literal() + " but it not support store items by automatic way".literal()
-            )
+            if (!level.isClientSide) {
+                player.sendSystemMessage(
+                    "clicked at ".literal() + blockEntity.type.location(ForgeRegistries.BLOCK_ENTITY_TYPES).toString()
+                        .literal() + " but it not support store items by automatic way".literal()
+                )
+            }
             return InteractionResult.FAIL
         }
         val res = LinkData.addLinked(pContext.itemInHand, blockEntity)
-        if (res) {
-            player.sendSystemMessage("link ${blockEntity.blockPos.toShortString()} success ".literal())
+        val message = if (res) {
+            "link ${blockEntity.blockPos.toShortString()} success ".literal()
         } else {
-            player.sendSystemMessage("replace already added ${blockEntity.blockPos.toShortString()}".literal())
+            "replace already added ${blockEntity.blockPos.toShortString()}".literal()
         }
+        if (!level.isClientSide) player.sendSystemMessage(message)
         return InteractionResult.SUCCESS
     }
 
     override fun isFoil(pStack: ItemStack): Boolean = LinkData.isLinking(pStack)
+
+    override fun appendHoverText(stack: ItemStack, level: Level?, componets: MutableList<Component>, isAdvance: TooltipFlag) {
+        super.appendHoverText(stack, level, componets, isAdvance)
+        if (!LinkData.haveTag(stack)) return
+        val linked = LinkData.linked(stack)
+        componets += (if (LinkData.isLinking(stack)) "Linking" else "Not Linking").literal()
+        for ((type, pos) in linked) {
+            componets += "pos:${pos.toShortString()} with type:${type.location(ForgeRegistries.BLOCK_ENTITY_TYPES)}".literal()
+        }
+    }
 }

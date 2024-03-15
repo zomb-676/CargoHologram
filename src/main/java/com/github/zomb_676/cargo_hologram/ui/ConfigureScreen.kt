@@ -34,7 +34,7 @@ class ConfigureScreen : Screen("Configure".literal()), CargoBlurScreen {
 
     @Suppress("NAME_SHADOWING")
     override fun render(pGuiGraphics: GuiGraphics, pMouseX: Int, pMouseY: Int, pPartialTick: Float) {
-        BlurConfigure.render(pGuiGraphics, mainArea)
+        BlurConfigure.render(this, pGuiGraphics, mainArea)
         val draw = mainArea.asBaseCursor().forDraw(pGuiGraphics)
         draw.autoMove(false)
         draw.outline(ARGBColor.Presets.WHITE)

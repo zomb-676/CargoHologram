@@ -2,7 +2,9 @@ package com.github.zomb_676.cargo_hologram.util.filter
 
 import com.github.zomb_676.cargo_hologram.mixin.DiggerItemAccessor
 import com.github.zomb_676.cargo_hologram.util.literal
+import com.github.zomb_676.cargo_hologram.util.location
 import com.github.zomb_676.cargo_hologram.util.plus
+import com.github.zomb_676.cargo_hologram.util.query
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
 import net.minecraft.nbt.CompoundTag
@@ -16,6 +18,7 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity
 import net.minecraftforge.common.capabilities.ForgeCapabilities
+import net.minecraftforge.registries.ForgeRegistries
 import java.util.*
 import java.util.function.Predicate
 
@@ -108,6 +111,29 @@ sealed class ItemTrait : Predicate<ItemStack> {
 
         override fun rawDescription(pass: Boolean): String =
             if (pass) "can be used as furnace fuel" else "can't be used as furnace fuel"
+    }
+
+    class ItemIdentity(val item : Item) : ItemTrait() {
+        override fun test(item: ItemStack): Boolean = item.`is`(this.item)
+        override fun description(pass : Boolean): Component =
+            if (pass) "is ".literal() + item.description else "is not ".literal() + item.description
+
+        override fun shouldReplace(trait: ItemTrait): Boolean =
+            trait is ItemIdentity && trait.item == this.item
+
+        override fun additionData(tag: CompoundTag) {
+            tag.putString(COMPOUND_DATA_KEY, item.location(ForgeRegistries.ITEMS).toString())
+        }
+
+        companion object {
+            fun fromItem(item: ItemStack): ItemIdentity = ItemIdentity(item.item)
+
+            fun fromTag(tag : CompoundTag) : ItemIdentity {
+                val string = tag.getString(COMPOUND_DATA_KEY)
+                val item = ResourceLocation(string).query(ForgeRegistries.ITEMS)
+                return ItemIdentity(item)
+            }
+        }
     }
 
     class ItemGroup(val tab: CreativeModeTab) : ItemTrait() {
@@ -287,6 +313,7 @@ sealed class ItemTrait : Predicate<ItemStack> {
                 list += trait
             }
             append(dataTrait)
+            append(ItemIdentity.fromItem(item))
             append(ToolType.fromItem(item))
             append(EquipSlot.fromItem(item))
             append(ItemGroup.fromItem(item))
@@ -310,6 +337,7 @@ sealed class ItemTrait : Predicate<ItemStack> {
                 "Damageable" -> Damageable
                 "Equipable" -> Equipable
                 "FurnaceFuel" -> FurnaceFuel
+                "ItemIdentity" -> ItemIdentity.fromTag(tag)
                 "ItemGroup" -> ItemGroup.fromTag(tag)
                 "ItemTag" -> ItemTag.fromTag(tag)
                 "ModId" -> ModId.fromTag(tag)

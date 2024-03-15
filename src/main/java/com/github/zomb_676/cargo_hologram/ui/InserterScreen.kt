@@ -1,9 +1,9 @@
 package com.github.zomb_676.cargo_hologram.ui
 
+import com.github.zomb_676.cargo_hologram.network.InserterTransformPacket
 import com.github.zomb_676.cargo_hologram.ui.component.BlurConfigure
-import com.github.zomb_676.cargo_hologram.ui.widget.CargoValueWidget
+import com.github.zomb_676.cargo_hologram.ui.widget.CargoButton
 import com.github.zomb_676.cargo_hologram.util.ARGBColor
-import com.github.zomb_676.cargo_hologram.util.assign
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
 import com.github.zomb_676.cargo_hologram.util.fillRelative
 import com.github.zomb_676.cargo_hologram.util.literal
@@ -11,36 +11,46 @@ import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.player.Inventory
-import net.minecraft.world.inventory.AbstractContainerMenu.getQuickCraftPlaceCount
-import net.minecraft.world.item.ItemStack
+import net.minecraft.world.inventory.AbstractContainerMenu
 
-class CargoStorageScreen(menu: CargoStorageMenu, inv: Inventory, component: Component) :
-    AbstractContainerScreen<CargoStorageMenu>(menu, inv, component), CargoBlurScreen {
+class InserterScreen(menu: InserterMenu, inv: Inventory, component: Component) :
+    AbstractContainerScreen<InserterMenu>(menu, inv, component), CargoBlurScreen {
 
-    var mainArea = AreaImmute.ofFullScreen()
-        private set
-    lateinit var priorityWidget: CargoValueWidget
+    companion object {
+
+    }
+
+    private var mainArea: AreaImmute = AreaImmute.ofFullScreen()
+    private lateinit var transButton: CargoButton
 
     override fun init() {
         super.init()
         this.topPos = (height - 170) / 2
         mainArea = AreaImmute.ofRelative(leftPos, topPos, 176, 170).asAreaImmute()
-        priorityWidget = CargoValueWidget(menu.priorityData)
-        addRenderableWidget(priorityWidget)
+        transButton = CargoButton.of(UIConstant.Paths.widgetSave).withListeners {
+            InserterTransformPacket().sendToServer()
+        }
+        addRenderableWidget(transButton)
+    }
+
+    override fun renderBg(pGuiGraphics: GuiGraphics, pPartialTick: Float, pMouseX: Int, pMouseY: Int) {
     }
 
     override fun render(pGuiGraphics: GuiGraphics, pMouseX: Int, pMouseY: Int, pPartialTick: Float) {
         BlurConfigure.render(this, pGuiGraphics, mainArea)
         val draw = mainArea.asBaseCursor().forDraw(pGuiGraphics)
         draw.outline(ARGBColor.Presets.WHITE)
-
         menu.slots.forEach { slot ->
             val x = slot.x + leftPos
             val y = slot.y + topPos
             pGuiGraphics.fillRelative(x - 1, y - 1, 18, 18, ARGBColor.Presets.GREY.alpha(0x5f))
             var slotItem = slot.item
             if (isQuickCrafting && !menu.carried.isEmpty && quickCraftSlots.contains(slot)) {
-                val count = getQuickCraftPlaceCount(this.quickCraftSlots, this.quickCraftingType, menu.carried)
+                val count = AbstractContainerMenu.getQuickCraftPlaceCount(
+                    this.quickCraftSlots,
+                    this.quickCraftingType,
+                    menu.carried
+                )
                 slotItem = if (slotItem.isEmpty) {
                     menu.carried.copyWithCount(count)
                 } else {
@@ -68,26 +78,19 @@ class CargoStorageScreen(menu: CargoStorageMenu, inv: Inventory, component: Comp
         }
 
         val side = mainArea.asBaseCursor().apply { rightLeft(width) }
-            .moveLeft(2).leftLeft(18).forDraw(pGuiGraphics)
+            .moveLeft(2).leftLeft(16).forDraw(pGuiGraphics)
 
-        side.upDown(16 * 2 + 5 + 4)
-        side.assignUp(18).draw(pGuiGraphics) { draw ->
-            priorityWidget.assign(draw.cursor)
+        side.assignUp(16).draw(pGuiGraphics) { draw ->
+            draw.cursor.setWidget(transButton)
             if (draw.inRange(pMouseX, pMouseY)) {
-                val message =
-                    listOf("priority:${priorityWidget.value}".literal(), "use mouse scroll to adjust".literal())
-                draw.tooltipComponent(pMouseX, pMouseY, message)
+                val tips = listOf("transform items".literal(),
+                    "will be transformed automatically when ui closed".literal())
+                draw.tooltipComponent(pMouseX, pMouseY, tips)
             }
         }
 
-        this.renderables.forEach { widget ->
-            widget.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick)
+        this.renderables.forEach { renderable ->
+            renderable.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick)
         }
     }
-
-    override fun getTooltipFromContainerItem(pStack: ItemStack): MutableList<Component> {
-        return super.getTooltipFromContainerItem(pStack)
-    }
-
-    override fun renderBg(pGuiGraphics: GuiGraphics, pPartialTick: Float, pMouseX: Int, pMouseY: Int) {}
 }

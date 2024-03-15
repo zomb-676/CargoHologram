@@ -165,6 +165,7 @@ fun MutableList<Component>.append(component: Component): MutableList<Component> 
 }
 
 fun Array<out BusSubscribe>.dispatch() = this.forEach { s -> s.registerEvent(Dispatcher) }
+fun BusSubscribe.dispatch() = this.registerEvent(Dispatcher)
 
 inline fun runOnDistClient(crossinline f: () -> () -> Unit) {
     DistExecutor.safeRunWhenOn(Dist.CLIENT) { DistExecutor.SafeRunnable { f()() } }
@@ -185,7 +186,6 @@ fun <T> ResourceLocation.query(registries: IForgeRegistry<T>) = registries.getVa
 fun <T> T.location(registries: IForgeRegistry<T>) = registries.getKey(this)!!
 
 operator fun MutableComponent.plus(component: Component): MutableComponent = this.append(component)
-operator fun String.plus(component: Component): MutableComponent = this.literal().append(component)
 
 fun AbstractWidget.isIn(mouseX: Double, mouseY: Double) =
     mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height

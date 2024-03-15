@@ -9,6 +9,4 @@ class CargoHologramSpriteUploader(textureManager: TextureManager
         val ATLAS_LOCATION = CargoHologram.rl("textures/atlas/default_theme")
         private val ATLAS_INFO_LOCATION = CargoHologram.rl("gui")
     }
-
-
 }
