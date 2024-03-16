@@ -81,7 +81,7 @@ data object Config : BusSubscribe {
         var giveUIStickAndMessageFirstLogin = true
             private set
 
-        private fun onLoad(@Suppress("UNUSED_PARAMETER") event: ModConfigEvent) {
+        private fun onLoad(event: ModConfigEvent) {
             if (event.config.type != ModConfig.Type.SERVER) return
             enableDebug = enableDebug or ENABLE_DEBUG.get()
 
@@ -116,7 +116,12 @@ data object Config : BusSubscribe {
         private val BLUR_EXPAND_Y = BUILDER.defineInRange("blur_expand_y", 10, 0, Int.MAX_VALUE)
         private val BLUR_BG_ALPHA = BUILDER.defineInRange("blur_bg_alpha", 0x7f, 0, 0xff)
         private val BLUR_OUTLINE = BUILDER.define("blur_outline", true)
-        private val next = BUILDER.pop()
+        private val SEARCH_BACKEND = BUILDER.pop()
+            .comment(
+                "if set JEI, search will be filtered by jei search result, and fallback to mod if jei is not installed",
+                "mod support search tag begin with # and mod name begin with @"
+            )
+            .defineEnum("search_backend", SearchEngine.Type.JEI)
 
         private val SPEC: ForgeConfigSpec = BUILDER.build()
 
@@ -127,14 +132,16 @@ data object Config : BusSubscribe {
 
         var blurType = CargoBlurScreen.BlurType.SELF
             private set
+        var searchBacked: SearchEngine.Type = SearchEngine.Type.JEI
 
-        private fun onLoad(@Suppress("UNUSED_PARAMETER") event: ModConfigEvent) {
+        private fun onLoad(event: ModConfigEvent) {
             if (event.config.type != ModConfig.Type.CLIENT) return
             this.blurType = BLUR_TYPE.get()
             BlurConfigure.blurRadius = BLUR_RADIUS.get().toFloat()
             BlurConfigure.blurExpandY = BLUR_EXPAND_Y.get()
             BlurConfigure.blurBgAlpha = BLUR_BG_ALPHA.get()
             BlurConfigure.blurOutline = BLUR_OUTLINE.get()
+            searchBacked = SEARCH_BACKEND.get()
         }
 
         fun saveBlurConfigure() {

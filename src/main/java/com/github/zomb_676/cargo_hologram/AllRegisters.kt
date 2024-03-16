@@ -48,7 +48,7 @@ object AllRegisters : BusSubscribe {
     }
 
     val CREATIVE_TAB: RegistryObject<CreativeModeTab> = TAB.register("cargo") {
-        CreativeModeTab.builder().title(AllTranslates.MOD_TAB).icon { ItemStack(MinecraftItems.DIAMOND) }.build()
+        CreativeModeTab.builder().title(AllTranslates.MOD_TAB).icon { ItemStack(MinecraftItems.BARREL) }.build()
     }
 
     object Menus {
@@ -64,7 +64,7 @@ object AllRegisters : BusSubscribe {
                     CargoStorageMenu(windowId, inv, data.readBlockPos())
             }, FeatureFlags.DEFAULT_FLAGS)
         }
-        val INSERTER_MENU = MENU.register("inserter") {
+        val INSERTER_MENU: RegistryObject<MenuType<InserterMenu>> = MENU.register("inserter") {
             MenuType(object : IContainerFactory<InserterMenu> {
                 override fun create(windowId: Int, inv: Inventory, data: FriendlyByteBuf): InserterMenu =
                     InserterMenu(windowId, inv, data.readBlockPos())
@@ -86,9 +86,9 @@ object AllRegisters : BusSubscribe {
         val cargoFilter: RegistryObject<CargoFilter> = ITEM.register("cargo_filter") { CargoFilter() }
         val panel: RegistryObject<MonitorPanel> = ITEM.register("monitor_glasses") { MonitorPanel() }
         val traitFilter: RegistryObject<TraitFilterItem> = ITEM.register("trait_filter") { TraitFilterItem() }
-        val listFilter = ITEM.register("list_filter") { ListFilterItem() }
-        val configureUISTick: RegistryObject<Item> =
-            ITEM.register("configure_ui_sitck") { UIConfigureItem { ::ConfigureScreen } }
+        val listFilter: RegistryObject<ListFilterItem> = ITEM.register("list_filter") { ListFilterItem() }
+        val configureUIStick: RegistryObject<Item> =
+            ITEM.register("configure_ui_stick") { UIConfigureItem { ::ConfigureScreen } }
         val remoteCraftTableItem: RegistryObject<BlockItem> = ITEM.register("remote_craft_table") {
             BlockItem(Blocks.remoteCraftTable.get(), Item.Properties())
         }
@@ -98,7 +98,7 @@ object AllRegisters : BusSubscribe {
         val cargoInserter: RegistryObject<BlockItem> = ITEM.register("cargo_inserter") {
             BlockItem(Blocks.cargoInserter.get(), Item.Properties())
         }
-        val linker = ITEM.register("linker") { LinkerItem() }
+        val linker: RegistryObject<LinkerItem> = ITEM.register("linker") { LinkerItem() }
     }
 
     @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")

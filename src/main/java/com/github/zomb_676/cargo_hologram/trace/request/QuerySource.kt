@@ -76,7 +76,7 @@ sealed class QuerySource {
 
         override fun send(level: ServerLevel, chunkPos: ChunkPos, result: MonitorRawResult) {
             val player = player.queryPlayer() ?: throwOnDev() ?: return
-            result.warpForPlayer(level, chunkPos).sendTo(PacketDistributor.PLAYER.with { player })
+            result.warpForPlayer(level, chunkPos).sendToPlayer(player)
         }
 
         override fun invalidate() {

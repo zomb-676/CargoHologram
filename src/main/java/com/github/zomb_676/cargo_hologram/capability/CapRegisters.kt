@@ -47,7 +47,7 @@ object CapRegisters : BusSubscribe {
         dispatcher<PlayerEvent.PlayerLoggedInEvent> { event ->
             event.entity.getCapability(PLAYER_FIRST_TAKE).ifPresent { cap ->
                 if (!cap.isPlayerFirstTake && Config.Server.giveUIStickAndMessageFirstLogin) {
-                    if (event.entity.inventory.add(ItemStack(AllRegisters.Items.configureUISTick.get()))) {
+                    if (event.entity.inventory.add(ItemStack(AllRegisters.Items.configureUIStick.get()))) {
                         cap.isPlayerFirstTake = true
                     }
                     event.entity.sendSystemMessage(AllTranslates.CONFIGURE_UI_TIP)

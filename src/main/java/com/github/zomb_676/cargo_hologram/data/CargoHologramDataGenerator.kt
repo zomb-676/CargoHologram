@@ -44,7 +44,7 @@ object CargoHologramDataGenerator : BusSubscribe {
                 panel.useItemModel(Items.DIAMOND)
                 traitFilter.useItemModel(Items.NAME_TAG)
                 listFilter.useItemModel(Items.NAME_TAG)
-                configureUISTick.useItemModel(Items.DEBUG_STICK)
+                configureUIStick.useItemModel(Items.DEBUG_STICK)
                 remoteCraftTableItem.useItemModel(Items.CRAFTING_TABLE)
                 cargoStorageItem.useItemModel(Items.BARREL)
                 cargoInserter.useItemModel(Items.SCULK_SHRIEKER)
@@ -139,7 +139,7 @@ object CargoHologramDataGenerator : BusSubscribe {
                 panel.lang("Monitor Panel")
                 traitFilter.lang("Item Trait Filter")
                 listFilter.lang("List Filter")
-                configureUISTick.lang("Configure UI stick")
+                configureUIStick.lang("Configure UI stick")
                 linker.lang("Linker")
             }
             AllRegisters.Blocks.apply {

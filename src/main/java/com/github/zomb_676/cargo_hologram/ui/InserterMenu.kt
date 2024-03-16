@@ -53,7 +53,7 @@ class InserterMenu(containerId: Int, val playerInv: Inventory, pos: BlockPos) :
     fun transform() {
         val candidate = inserter.linked.map { (type, pos) ->
             inserter.level?.getBlockEntity(pos) as? CargoStorageBlockEntity?
-        }.filterNotNull().sortedBy(CargoStorageBlockEntity::priority)
+        }.filterNotNull().sortedByDescending(CargoStorageBlockEntity::priority)
         this.transSlots.forEach { slot ->
             var transItem = slot.item
             if (transItem.isEmpty) return@forEach

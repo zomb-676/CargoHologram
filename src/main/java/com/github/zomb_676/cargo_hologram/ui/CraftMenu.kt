@@ -123,7 +123,7 @@ class CraftMenu(containerId: Int, val playerInv: Inventory) :
         return false
     }
 
-    fun requestCraft(): Boolean {
+    private fun requestCraft(): Boolean {
         val toSearch = mutableListOf<ItemStack>()
         materialSlots.forEach { m ->
             if (m.item.isEmpty) return@forEach
@@ -140,13 +140,6 @@ class CraftMenu(containerId: Int, val playerInv: Inventory) :
         val level = player.level()
         if (level.isClientSide) return false
         val querySource = QueryCenter.playerSources[player.uuid] ?: return false
-        val chunkPoses = buildList {
-            player.blockPosition().toChunkPos().near(querySource.radius) {
-                this.add(it)
-            }
-        }
-
-        val map = MonitorCenter.queryMap[level.dimension()] ?: return false
 
         fun take(pos: BlockPos, slot: Int, item: ItemStack, count: Int): Boolean {
             var success = false
@@ -164,8 +157,7 @@ class CraftMenu(containerId: Int, val playerInv: Inventory) :
         }
 
         val success : Boolean = run {
-            map.forEach{ (chunkPos, entry) ->
-                if (!chunkPoses.contains(chunkPos)) return@forEach
+            querySource.attached().forEach{ (_, entry) ->
                 val result = entry.result ?: return@forEach
                 result.forEach { (pos, slots) ->
                     for ((slot, item) in slots) {
@@ -212,5 +204,4 @@ class CraftMenu(containerId: Int, val playerInv: Inventory) :
     }
 
     override fun stillValid(pPlayer: Player): Boolean = true
-//        playerInv.getSelected().`is`(AllRegisters.Items.crafter.get())
 }

@@ -13,14 +13,24 @@ import net.minecraft.world.inventory.Slot
 import net.minecraft.world.item.ItemStack
 import net.minecraftforge.items.ItemStackHandler
 import net.minecraftforge.items.SlotItemHandler
+import net.minecraftforge.items.wrapper.PlayerMainInvWrapper
 
 class CargoStorageMenu(containerId: Int, val playerInv: Inventory, pos: BlockPos) :
     AbstractContainerMenu(AllRegisters.Menus.CARGO_STORAGE_MENU.get(), containerId) {
     override fun quickMoveStack(pPlayer: Player, pIndex: Int): ItemStack {
         val item = this.slots[pIndex].item
-        if (item.`is`(AllRegisters.Items.traitFilter.get())) {
-            filterItemSlot.set(item.copy())
+        if (item.isEmpty) return ItemStack.EMPTY
+        val targetHandle = if (pIndex in 0..<36) {
+            storageHandle
+        } else {
+            PlayerMainInvWrapper(pPlayer.inventory)
         }
+        var transItem = item.copy()
+        for (slotIndex in 0..<targetHandle.slots) {
+            transItem = targetHandle.insertItem(slotIndex, transItem, false)
+            if (transItem.isEmpty) break
+        }
+        this.slots[pIndex].set(transItem)
         return ItemStack.EMPTY
     }
 

@@ -5,6 +5,7 @@ import com.github.zomb_676.cargo_hologram.CargoHologram
 import com.github.zomb_676.cargo_hologram.network.SetSlotPacket
 import com.github.zomb_676.cargo_hologram.network.TransformRecipePack
 import com.github.zomb_676.cargo_hologram.ui.*
+import com.github.zomb_676.cargo_hologram.util.SearchEngine
 import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
 import com.github.zomb_676.cargo_hologram.util.optional
 import mezz.jei.api.IModPlugin
@@ -23,11 +24,13 @@ import mezz.jei.api.recipe.transfer.IRecipeTransferHandler
 import mezz.jei.api.registration.IGuiHandlerRegistration
 import mezz.jei.api.registration.IRecipeTransferRegistration
 import mezz.jei.api.runtime.IClickableIngredient
+import mezz.jei.api.runtime.IJeiRuntime
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.renderer.Rect2i
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.inventory.MenuType
+import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.crafting.CraftingRecipe
 import java.util.*
@@ -35,6 +38,12 @@ import java.util.*
 @JeiPlugin
 @Suppress("unused")
 class CargoHologramJeiPlugin : IModPlugin {
+
+    companion object {
+        var jeiRuntime: IJeiRuntime? = null
+        var jeiSearchBacked: SearchEngine.SearchBacked? = null
+    }
+
     override fun getPluginUid(): ResourceLocation = CargoHologram.rl("jei_plugin")
 
     override fun registerRecipeTransferHandlers(registration: IRecipeTransferRegistration) {
@@ -96,8 +105,7 @@ class CargoHologramJeiPlugin : IModPlugin {
             override fun onComplete() {}
             override fun shouldHighlightTargets(): Boolean = true
         })
-        registration.addGhostIngredientHandler(
-            FilterScreen::class.java,
+        registration.addGhostIngredientHandler(FilterScreen::class.java,
             object : IGhostIngredientHandler<FilterScreen> {
                 override fun <I : Any?> getTargetsTyped(
                     gui: FilterScreen,
@@ -149,4 +157,29 @@ class CargoHologramJeiPlugin : IModPlugin {
             override fun getScreenWidth(): Int = screen.width
             override fun getScreenHeight(): Int = screen.height
         }
+
+    override fun onRuntimeAvailable(jeiRuntime: IJeiRuntime) {
+        CargoHologramJeiPlugin.jeiRuntime = jeiRuntime
+        val filter = jeiRuntime.ingredientFilter
+        jeiSearchBacked = object : SearchEngine.SearchBacked {
+            private var lastFilterText: String = ""
+            private var cached: Lazy<List<ItemStack>> = lazy { listOf() }
+            private var setCache: Lazy<Set<Item>> = lazy { emptySet() }
+            override var searchText: String
+                get() = filter.filterText
+                set(value) {
+                    if (value != lastFilterText) {
+                        lastFilterText = value
+                        filter.filterText = value
+                        update()
+                    }
+                }
+
+            fun update() {
+                cached = lazy { filter.filteredItemStacks }
+                setCache = lazy { cached.value.asSequence().map { it.item }.toSet() }
+            }
+            override fun containsInResult(itemStack: ItemStack): Boolean = setCache.value.contains(itemStack.item)
+        }
+    }
 }

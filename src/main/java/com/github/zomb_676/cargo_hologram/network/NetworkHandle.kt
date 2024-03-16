@@ -20,7 +20,7 @@ object NetworkHandle {
     private val channel = NetworkRegistry.newSimpleChannel(
         CargoHologram.rl("network"), { VERSION }, VERSION::equals, VERSION::equals
     )
-    private val directions: MutableMap<Class<*>, NetworkDirection?> = mutableMapOf()
+    private val directions: MutableMap<Class<*>, NetworkDirection> = mutableMapOf()
 
     fun sendToServer(packet: NetworkPack<*>) = channel.sendToServer(packet)
     fun <T> send(packet: NetworkPack<T>, connection: Connection) =
@@ -63,6 +63,7 @@ object NetworkHandle {
 
             override fun decode(buf: FriendlyByteBuf): T {
                 if (buf.readerIndex() != 1) {
+                    //the readerIndex 0 is used to identify pack type by forge automatically
                     val message = "readerIndex must be 1 before decode in ${T::class.java.simpleName}"
                     log { error(message) }
                     onDev { throw RuntimeException(message) }
