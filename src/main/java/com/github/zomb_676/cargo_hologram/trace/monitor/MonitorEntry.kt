@@ -3,6 +3,7 @@ package com.github.zomb_676.cargo_hologram.trace.monitor
 import com.github.zomb_676.cargo_hologram.trace.GlobalFilter
 import com.github.zomb_676.cargo_hologram.trace.data.MonitorRawResult
 import com.github.zomb_676.cargo_hologram.trace.request.QuerySource
+import com.github.zomb_676.cargo_hologram.util.toChunkPos
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.ChunkPos
@@ -13,7 +14,7 @@ import net.minecraft.world.level.chunk.LevelChunk
 /**
  * search
  */
-class MonitorEntry(val level: Level,val chunkPos: ChunkPos) {
+class MonitorEntry(val level: Level, val chunkPos: ChunkPos) {
 
     private val requirement: MonitorRequirement = MonitorRequirement(chunkPos)
     var result: MonitorRawResult? = null
@@ -28,11 +29,15 @@ class MonitorEntry(val level: Level,val chunkPos: ChunkPos) {
     fun tick(chunk: LevelChunk, alreadySearched: IntAVLTreeSet, haveTime: Boolean): Boolean {
         if (!(haveTime || requirement.force())) return false
         val builder = MonitorRawResult.beginBuild()
-        chunk.blockEntities.forEach { (_, blockEntity: BlockEntity) ->
+        if (requirement.fullChunk()) {
+            chunk.blockEntities.values.asSequence()
+        } else {
+            requirement.blockPositioned().filter { pos -> pos.toChunkPos() == chunk.pos }
+                .map { pos -> chunk.getBlockEntity(pos) }.filterNotNull()
+        }.forEach { blockEntity: BlockEntity ->
             if (GlobalFilter.filterBlockEntity(blockEntity) && requirement.filterBlockEntity(blockEntity)) {
                 builder.collectForBlockEntity(
-                    blockEntity,
-                    requirement.slotFilterForBlockEntity(blockEntity), alreadySearched
+                    blockEntity, requirement.slotFilterForBlockEntity(blockEntity), alreadySearched
                 )
             }
         }

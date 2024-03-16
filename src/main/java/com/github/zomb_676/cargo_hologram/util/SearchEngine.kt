@@ -7,6 +7,9 @@ import net.minecraftforge.fml.ModList
 import java.util.function.Predicate
 
 object SearchEngine {
+
+    private var backedType : Type = Type.JEI
+
     enum class Type {
         JEI, SELF
     }
@@ -52,12 +55,28 @@ object SearchEngine {
     }
 
     fun getBacked(): SearchBacked {
-        val configPrefer = Config.Client.searchBacked == Type.JEI
+        val configPrefer = this.backedType == Type.JEI
         val jeiInstalled = ModList.get().isLoaded("jei")
         return if (configPrefer && jeiInstalled) {
             CargoHologramJeiPlugin.jeiSearchBacked!!
         } else {
             SelfBacked
         }
+    }
+
+    fun getBackedType() = this.backedType
+
+    fun setBacked(type: Type) {
+        if (type != Type.JEI) {
+            val backed = getBacked()
+            if (backed != SelfBacked) {
+                backed.searchText = ""
+            }
+        }
+        this.backedType = type
+    }
+
+    fun save() {
+        Config.Client.SEARCH_BACKEND.set(this.backedType)
     }
 }

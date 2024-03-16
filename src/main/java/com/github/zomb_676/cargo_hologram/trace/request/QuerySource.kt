@@ -1,16 +1,18 @@
 package com.github.zomb_676.cargo_hologram.trace.request
 
 import com.github.zomb_676.cargo_hologram.trace.GlobalFilter
-import com.github.zomb_676.cargo_hologram.trace.monitor.MonitorEntry
 import com.github.zomb_676.cargo_hologram.trace.data.MonitorRawResult
+import com.github.zomb_676.cargo_hologram.trace.monitor.MonitorEntry
 import com.github.zomb_676.cargo_hologram.util.*
+import net.minecraft.core.BlockPos
 import net.minecraft.resources.ResourceKey
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.entity.BlockEntity
-import net.minecraftforge.network.PacketDistributor
+import net.minecraftforge.registries.ForgeRegistries
 import org.apache.http.util.Asserts
 import java.util.*
 import java.util.function.IntPredicate
@@ -36,13 +38,14 @@ sealed class QuerySource {
     fun detach(chunkPos: ChunkPos) = attached.remove(chunkPos)
     fun detachAll() = attached.clear()
     fun attached() = attached.iterator()
+    open fun queryBlockPosition() : Sequence<BlockPos> = emptySequence()
 
     /**
      * @param level the level of the data, not the source's level
      */
     abstract fun send(level: ServerLevel, chunkPos: ChunkPos, result: MonitorRawResult)
 
-    open fun valid(): Boolean = true
+    abstract fun valid(): Boolean
     abstract fun invalidate()
     open fun onRemove() {}
 
@@ -63,8 +66,14 @@ sealed class QuerySource {
             return PlayerQuerySource(player.uuid, radius, requirement)
         }
 
-        fun ofFixedPostion(player: UUID, loadChunk : Boolean, requirement: QueryRequirement) {
-
+        fun ofFixedPostion(
+            player: ServerPlayer,
+            loadChunk: Boolean,
+            blockEntity: BlockEntity,
+            requirement: QueryRequirement,
+        ): PlayerFixedQuerySource {
+            Asserts.check(player.isOnline(), "player{name:${player.name},uuid:${player.uuid}} is offline")
+            return PlayerFixedQuerySource(player.uuid, loadChunk, blockEntity, requirement)
         }
     }
 
@@ -76,7 +85,7 @@ sealed class QuerySource {
 
         override fun send(level: ServerLevel, chunkPos: ChunkPos, result: MonitorRawResult) {
             val player = player.queryPlayer() ?: throwOnDev() ?: return
-            result.warpForPlayer(level, chunkPos).sendToPlayer(player)
+            result.warpForPlayerCentered(level, chunkPos).sendToPlayer(player)
         }
 
         override fun invalidate() {
@@ -86,5 +95,30 @@ sealed class QuerySource {
         override fun valid(): Boolean = valid
     }
 
-    class FixedPosition()
+    class PlayerFixedQuerySource(
+        val player: UUID,
+        val loadChunk: Boolean,
+        blockEntity: BlockEntity,
+        private val requirement: QueryRequirement,
+    ) : QuerySource() {
+        private var valid = true
+        val pos: BlockPos = blockEntity.blockPos
+        val level: ResourceKey<Level> = blockEntity.level!!.dimension()
+        val type: ResourceLocation = blockEntity.type.location(ForgeRegistries.BLOCK_ENTITY_TYPES)
+        private val iter = listOf(pos)
+
+        override fun send(level: ServerLevel, chunkPos: ChunkPos, result: MonitorRawResult) {
+            val player = player.queryPlayer() ?: throwOnDev() ?: return
+            result.single(pos,level.dimension())?.sendToPlayer(player)
+        }
+
+        override fun invalidate() {
+            this.valid = false
+        }
+
+        override fun queryBlockPosition(): Sequence<BlockPos> = iter.asSequence()
+        override fun valid(): Boolean = valid
+        override fun requirement(): QueryRequirement = requirement
+        override fun fullChunk(): Boolean = false
+    }
 }

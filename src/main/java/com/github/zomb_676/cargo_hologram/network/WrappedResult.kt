@@ -2,7 +2,6 @@ package com.github.zomb_676.cargo_hologram.network
 
 import com.github.zomb_676.cargo_hologram.trace.ClientResultCache
 import com.github.zomb_676.cargo_hologram.trace.data.MonitorRawResult
-import com.github.zomb_676.cargo_hologram.trace.data.MonitorType
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.resources.ResourceKey
@@ -13,8 +12,7 @@ import net.minecraftforge.network.NetworkEvent
 class WrappedResult(
     val result: MonitorRawResult,
     val level: ResourceKey<Level>,
-    val chunkPos: ChunkPos,
-    val type: MonitorType,
+    private val chunkPos: ChunkPos,
 ) :
     NetworkPack<WrappedResult> {
 
@@ -24,8 +22,7 @@ class WrappedResult(
             val result = MonitorRawResult.decode(buffer)
             val level = buffer.readResourceKey(Registries.DIMENSION)
             val chunkPos = buffer.readChunkPos()
-            val type = buffer.readEnum(MonitorType::class.java)
-            return WrappedResult(result, level, chunkPos, type)
+            return WrappedResult(result, level, chunkPos)
         }
     }
 
@@ -33,11 +30,10 @@ class WrappedResult(
         result.encode(buffer)
         buffer.writeResourceKey(level)
         buffer.writeChunkPos(chunkPos)
-        buffer.writeEnum(type)
     }
 
     override fun handle(context: NetworkEvent.Context) {
-        ClientResultCache.cache(result, level, chunkPos, type)
+        ClientResultCache.cache(result, level, chunkPos)
     }
 
 }

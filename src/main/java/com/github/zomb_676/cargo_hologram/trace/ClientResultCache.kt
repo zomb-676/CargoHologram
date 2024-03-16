@@ -1,11 +1,15 @@
 package com.github.zomb_676.cargo_hologram.trace
 
 import com.github.zomb_676.cargo_hologram.trace.data.MonitorRawResult
-import com.github.zomb_676.cargo_hologram.trace.data.MonitorType
+import com.github.zomb_676.cargo_hologram.trace.data.ResultPack
+import com.github.zomb_676.cargo_hologram.trace.data.SingleRawResult
 import com.github.zomb_676.cargo_hologram.util.*
+import net.minecraft.core.BlockPos
 import net.minecraft.resources.ResourceKey
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.block.Block
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent
 import net.minecraftforge.event.entity.player.PlayerEvent
 import org.apache.http.util.Asserts
@@ -13,11 +17,13 @@ import kotlin.math.abs
 import kotlin.math.max
 
 object ClientResultCache : BusSubscribe {
-    private var playerCentered: MutableMap<ChunkPos, ProcessedResult> = mutableMapOf()
+    var playerCentered: MutableMap<ChunkPos, ProcessedResult> = mutableMapOf()
+    var fixedPosition: MutableMap<ResourceKey<Level>, MutableMap<BlockPos, ProcessedResult>> = mutableMapOf()
+    var fixedTraced: MutableMap<ResourceKey<Level>, MutableList<BlockPos>> = mutableMapOf()
 
-    fun cache(result: MonitorRawResult, level: ResourceKey<Level>, chunkPos: ChunkPos, type: MonitorType) {
-        when (type) {
-            MonitorType.PLAYER_CENTERED -> {
+    fun cache(result: ResultPack, level: ResourceKey<Level>, chunkPos: ChunkPos) {
+        when (result) {
+            is MonitorRawResult -> {
                 if (currentClientPlayer().level().dimension() != level) return
                 if (result.isEmpty()) {
                     playerCentered.remove(chunkPos)
@@ -25,21 +31,28 @@ object ClientResultCache : BusSubscribe {
                     playerCentered[chunkPos] = ProcessedResult.convert(result)
                 }
             }
+
+            is SingleRawResult -> {
+                val map = fixedPosition.computeIfAbsent(level) { mutableMapOf() }
+
+            }
         }
     }
 
-    fun cleanCache() {
+    fun cleanPlayerCenteredCache() {
         playerCentered.clear()
     }
 
     override fun registerEvent(dispatcher: Dispatcher) {
         dispatcher<PlayerEvent.PlayerChangedDimensionEvent> { event ->
             if (event.entity.level().isClientSide) {
-                cleanCache()
+                cleanPlayerCenteredCache()
             }
         }
         dispatcher<ClientPlayerNetworkEvent.LoggingOut> { event ->
-            cleanCache()
+            cleanPlayerCenteredCache()
+            fixedPosition.clear()
+            fixedTraced.clear()
         }
     }
 
@@ -62,4 +75,21 @@ object ClientResultCache : BusSubscribe {
     }
 
     fun count(): Int = playerCentered.values.sumOf(ProcessedResult::count)
+
+    inline fun iter(str: String, f: (pos: BlockPos, block: Block, slot: Int, item: ItemStack) -> Unit): Int {
+        val backed = SearchEngine.getBacked()
+        backed.searchText = str
+        var count = 0
+        playerCentered.forEach { (_, res) ->
+            val s = if (str.isEmpty()) res.iterBy { true } else res.iterBy(backed::containsInResult)
+            s.forEach { (pos, seq) ->
+                val block = currentMinecraft().level!!.getBlockState(pos).block
+                seq.forEach { (slot, item) ->
+                    f(pos, block, slot, item)
+                }
+            }
+            count += s.getCount()
+        }
+        return count
+    }
 }

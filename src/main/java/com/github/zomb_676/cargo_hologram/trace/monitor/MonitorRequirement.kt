@@ -3,10 +3,12 @@ package com.github.zomb_676.cargo_hologram.trace.monitor
 import com.github.zomb_676.cargo_hologram.trace.GlobalFilter
 import com.github.zomb_676.cargo_hologram.trace.data.MonitorRawResult
 import com.github.zomb_676.cargo_hologram.trace.request.QuerySource
+import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.entity.BlockEntityType
+import org.apache.http.util.Asserts
 import java.util.function.IntPredicate
 
 /**
@@ -65,5 +67,8 @@ class MonitorRequirement(val chunkPos: ChunkPos) {
         return sources.isNotEmpty()
     }
 
-
+    fun blockPositioned(): Sequence<BlockPos> {
+        Asserts.check(!fullChunk(), "should not be called while fullChunk() is true")
+        return sources.asSequence().map(QuerySource::queryBlockPosition).flatten()
+    }
 }

@@ -1,6 +1,7 @@
 package com.github.zomb_676.cargo_hologram.network
 
 import com.github.zomb_676.cargo_hologram.CargoHologram
+import com.github.zomb_676.cargo_hologram.trace.data.SingleRawResult
 import com.github.zomb_676.cargo_hologram.util.log
 import com.github.zomb_676.cargo_hologram.util.onDev
 import com.github.zomb_676.cargo_hologram.util.optional
@@ -12,6 +13,7 @@ import net.minecraftforge.network.NetworkRegistry
 import net.minecraftforge.network.PacketDistributor
 import org.apache.http.util.Asserts
 import java.util.function.Supplier
+import javax.print.attribute.standard.Media
 
 object NetworkHandle {
 
@@ -114,5 +116,6 @@ object NetworkHandle {
         register(SetFilterPack::decode, NetworkDirection.PLAY_TO_SERVER)
         register(InserterTransformPacket::decode, NetworkDirection.PLAY_TO_SERVER)
         register(SetPriorityPack::decode, NetworkDirection.PLAY_TO_SERVER)
+        register(SingleRawResult::decode, NetworkDirection.PLAY_TO_CLIENT)
     }
 }

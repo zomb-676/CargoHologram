@@ -3,6 +3,7 @@ package com.github.zomb_676.cargo_hologram.trace
 import com.github.zomb_676.cargo_hologram.trace.monitor.MonitorCenter
 import com.github.zomb_676.cargo_hologram.trace.request.QuerySource
 import com.github.zomb_676.cargo_hologram.util.*
+import net.minecraft.core.BlockPos
 import net.minecraft.resources.ResourceKey
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.level.ChunkPos
@@ -11,6 +12,8 @@ import net.minecraftforge.event.TickEvent
 import net.minecraftforge.event.TickEvent.ServerTickEvent
 import net.minecraftforge.event.entity.player.PlayerEvent
 import java.util.*
+import java.util.function.Function
+import java.util.stream.Stream
 
 /**
  * work between [QuerySource] and [MonitorCenter]
@@ -18,6 +21,8 @@ import java.util.*
 object QueryCenter : BusSubscribe {
     val playerSources: MutableMap<UUID, QuerySource.PlayerQuerySource> = mutableMapOf()
     private val playerTrace: MutableMap<UUID, LastPlayerLocation> = mutableMapOf()
+    private val fixedTrace: MutableMap<ResourceKey<Level>, MutableMap<BlockPos, MutableSet<QuerySource.PlayerFixedQuerySource>>> =
+        mutableMapOf()
 
     class LastPlayerLocation(player: ServerPlayer) {
         private var lastLevel: ResourceKey<Level> = player.level().dimension()
@@ -51,6 +56,13 @@ object QueryCenter : BusSubscribe {
                 playerSources.put(source.player, source)?.invalidate()
                 playerTrace[source.player] = LastPlayerLocation(source.player.queryPlayer()!!)
                 monitorForPlayer(source.player.queryPlayer()!!, source)
+            }
+
+            is QuerySource.PlayerFixedQuerySource -> {
+                fixedTrace.computeIfAbsent(source.level) { mutableMapOf() }
+                    .computeIfAbsent(source.pos) { mutableSetOf() }
+                    .add(source)
+                monitorForFixedPosition(source)
             }
         }
     }
@@ -89,6 +101,11 @@ object QueryCenter : BusSubscribe {
         ChunkPos(player.blockPosition()).near(source.radius) { chunkPos ->
             MonitorCenter.monitor(level, chunkPos, source)
         }
+    }
+
+    private fun monitorForFixedPosition(source: QuerySource.PlayerFixedQuerySource) {
+        source.attachLevel(source.level)
+        MonitorCenter.monitor(source.level.dim(), source.pos.toChunkPos(), source)
     }
 
 }

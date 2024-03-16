@@ -6,14 +6,16 @@ import com.github.zomb_676.cargo_hologram.util.SlotItemStack
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet
 import net.minecraft.core.BlockPos
 import net.minecraft.network.FriendlyByteBuf
+import net.minecraft.resources.ResourceKey
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.ChunkPos
+import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraftforge.common.capabilities.ForgeCapabilities
 import java.util.function.IntPredicate
 
-class MonitorRawResult(val data: Map<BlockPos, List<SlotItemStack>>) :
-    Iterable<Map.Entry<BlockPos, List<SlotItemStack>>> {
+class MonitorRawResult private constructor(val data: Map<BlockPos, List<SlotItemStack>>) :
+    Iterable<Map.Entry<BlockPos, List<SlotItemStack>>>, ResultPack {
 
     class QueryRawResultBuilder {
         private val data: MutableMap<BlockPos, MutableList<SlotItemStack>> = mutableMapOf()
@@ -72,6 +74,11 @@ class MonitorRawResult(val data: Map<BlockPos, List<SlotItemStack>>) :
 
     fun isEmpty() = data.isEmpty()
 
-    fun warpForPlayer(level: ServerLevel, chunkPos: ChunkPos) =
-        WrappedResult(this, level.dimension(), chunkPos, MonitorType.PLAYER_CENTERED)
+    fun warpForPlayerCentered(level: ServerLevel, chunkPos: ChunkPos) =
+        WrappedResult(this, level.dimension(), chunkPos)
+
+    fun single(blockPos: BlockPos, level: ResourceKey<Level>): SingleRawResult? {
+        val single = data[blockPos] ?: return null
+        return SingleRawResult(blockPos, level, single)
+    }
 }

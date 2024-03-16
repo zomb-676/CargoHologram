@@ -3,9 +3,11 @@ package com.github.zomb_676.cargo_hologram.trace.request
 import com.github.zomb_676.cargo_hologram.selector.Selector
 import com.github.zomb_676.cargo_hologram.util.inlineAssert
 import net.minecraft.network.FriendlyByteBuf
+import net.minecraftforge.event.TickEvent.LevelTickEvent
 
 /**
  * generic parameters used for [QuerySource]
+ * @param force will run if [LevelTickEvent.haveTime] is false
  */
 class QueryRequirement(val force: Boolean, val crossDimension: Boolean, vararg val selector: Selector) {
     companion object {

@@ -1,5 +1,6 @@
 package com.github.zomb_676.cargo_hologram.ui.widget
 
+import com.github.zomb_676.cargo_hologram.util.isIn
 import net.minecraft.resources.ResourceLocation
 
 class CargoCycleButton<T>(normal: ResourceLocation, hover: ResourceLocation, states: Array<T>, initial: T) :
@@ -16,6 +17,11 @@ class CargoCycleButton<T>(normal: ResourceLocation, hover: ResourceLocation, sta
             if (entries.isEmpty()) throw RuntimeException("enum class ${T::class.java.simpleName} not have any entries")
             return CargoCycleButton(texture, texture, entries, entries.first())
         }
+
+        inline fun <reified T : Enum<T>> of(texture: ResourceLocation, initial: T): CargoCycleButton<T> {
+            val entries = enumValues<T>()
+            return CargoCycleButton(texture, texture, entries, initial)
+        }
     }
 
     private val state: Array<T> = states
@@ -29,14 +35,20 @@ class CargoCycleButton<T>(normal: ResourceLocation, hover: ResourceLocation, sta
     }
 
     override fun clicked(pMouseX: Double, pMouseY: Double): Boolean {
-        if (!super.clicked(pMouseX, pMouseY)) return false
+        if (!isIn(pMouseX, pMouseY)) return false
         index++
         if (index == state.size) {
             index = 0
         }
         this.currentState = state[index]
+        listeners.forEach { it.invoke() }
         return true
     }
 
     fun currentState() = currentState
+
+    override fun withListeners(f: () -> Unit): CargoCycleButton<T> {
+        super.withListeners(f)
+        return this
+    }
 }

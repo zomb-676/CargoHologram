@@ -19,7 +19,7 @@ open class CargoButton protected constructor(
         fun of(normal: ResourceLocation, hover: ResourceLocation) = CargoButton(normal, hover)
     }
 
-    private val listeners: MutableList<() -> Unit> = mutableListOf()
+    protected val listeners: MutableList<() -> Unit> = mutableListOf()
 
     override fun renderWidget(pGuiGraphics: GuiGraphics, pMouseX: Int, pMouseY: Int, pPartialTick: Float) {
         val path = if (this.isHovered()) hover else normal
@@ -29,7 +29,7 @@ open class CargoButton protected constructor(
 
     override fun updateWidgetNarration(pNarrationElementOutput: NarrationElementOutput) {}
 
-    fun withListeners(f: () -> Unit): CargoButton {
+    open fun withListeners(f: () -> Unit): CargoButton {
         listeners.add(f)
         return this
     }
