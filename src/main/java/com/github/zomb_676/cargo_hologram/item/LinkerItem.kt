@@ -24,7 +24,7 @@ import net.minecraftforge.registries.ForgeRegistries
 class LinkerItem : Item(Properties().stacksTo(1)) {
     object LinkData {
         private const val COMPOUND_TAG_NAME = "linker_data"
-        private const val COMPUND_LINK_STATE_NAME = "link_state"
+        private const val COMPOUND_LINK_STATE_NAME = "link_state"
         private const val COMPOUND_LIST_TAG_SELECTED_NAME = "selected"
         private const val COMPOUND_SELECTED_TYPE_KEY = "type"
         private const val COMPOUND_SELECTED_POS_KEY = "pos"
@@ -34,12 +34,12 @@ class LinkerItem : Item(Properties().stacksTo(1)) {
 
         fun isLinking(itemStack: ItemStack): Boolean {
             val tag = itemStack.tag?.getCompound(COMPOUND_TAG_NAME) ?: return false
-            return tag.getBoolean(COMPUND_LINK_STATE_NAME)
+            return tag.getBoolean(COMPOUND_LINK_STATE_NAME)
         }
 
         fun setLinking(itemStack: ItemStack, state: Boolean) {
             val tag = itemStack.tag!!.getCompound(COMPOUND_TAG_NAME)
-            tag.putBoolean(COMPUND_LINK_STATE_NAME, state)
+            tag.putBoolean(COMPOUND_LINK_STATE_NAME, state)
             if (state) {
                 tag.getList(COMPOUND_LIST_TAG_SELECTED_NAME, Tag.TAG_COMPOUND.toInt()).clear()
             }
@@ -51,7 +51,7 @@ class LinkerItem : Item(Properties().stacksTo(1)) {
 
         fun init(itemStack: ItemStack) {
             val tag = CompoundTag()
-            tag.putBoolean(COMPUND_LINK_STATE_NAME, false)
+            tag.putBoolean(COMPOUND_LINK_STATE_NAME, false)
             tag.put(COMPOUND_LIST_TAG_SELECTED_NAME, ListTag())
             itemStack.orCreateTag.put(COMPOUND_TAG_NAME, tag)
         }
@@ -83,7 +83,6 @@ class LinkerItem : Item(Properties().stacksTo(1)) {
         }
 
         fun linked(itemStack: ItemStack): List<Pair<BlockEntityType<*>, BlockPos>> {
-            if (!isLinking(itemStack)) return emptyList()
             val tag = itemStack.tag!!.getCompound(COMPOUND_TAG_NAME)
                 .getList(COMPOUND_LIST_TAG_SELECTED_NAME, Tag.TAG_COMPOUND.toInt())
             return tag.map {
@@ -124,6 +123,7 @@ class LinkerItem : Item(Properties().stacksTo(1)) {
             LinkData.init(pContext.itemInHand)
             return InteractionResult.FAIL
         }
+        if (!LinkData.isLinking(pContext.itemInHand)) return InteractionResult.FAIL
         if (blockEntity == null) {
             val blockState = level.getBlockState(pos)
             if (!level.isClientSide) {

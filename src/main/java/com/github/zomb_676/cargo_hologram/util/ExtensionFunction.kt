@@ -3,6 +3,7 @@ package com.github.zomb_676.cargo_hologram.util
 import com.github.zomb_676.cargo_hologram.CargoHologram
 import com.github.zomb_676.cargo_hologram.Config
 import com.github.zomb_676.cargo_hologram.util.cursor.Cursor
+import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.components.AbstractWidget
@@ -192,4 +193,10 @@ fun AbstractWidget.isIn(mouseX: Double, mouseY: Double) =
 
 fun GuiGraphics.fillRelative(x: Int, y: Int, width: Int, height: Int, color: ARGBColor) {
     this.fill(x, y, x + width, y + height, color.color)
+}
+
+inline fun PoseStack.layer(code : () -> Unit) {
+    this.pushPose()
+    code()
+    this.popPose()
 }

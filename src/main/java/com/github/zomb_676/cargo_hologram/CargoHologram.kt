@@ -50,7 +50,8 @@ class CargoHologram {
                     CargoStorageHud,
                     ClientResultCache,
                     CargoHologramComponents,
-                    BlurHandle
+                    BlurHandle,
+                    HighlightLinked
                 ).dispatch()
             }
         }

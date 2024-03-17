@@ -31,6 +31,7 @@ class CargoCheckBox private constructor(val type: Type, initial: State) : Abstra
         fun ofFull(state: State = State.DEFAULT) = CargoCheckBox(Type.FULL, state)
         fun ofExplicit(state: State = State.CHECKED) = CargoCheckBox(Type.EXPLICIT, state)
         fun ofImplicit(state: State = State.CHECKED) = CargoCheckBox(Type.IMPLICIT, state)
+        fun ofImplicit(state: Boolean) = ofImplicit(if (state) State.CHECKED else State.DEFAULT)
     }
 
     override fun renderWidget(pGuiGraphics: GuiGraphics, pMouseX: Int, pMouseY: Int, pPartialTick: Float) {
@@ -40,11 +41,7 @@ class CargoCheckBox private constructor(val type: Type, initial: State) : Abstra
 
     override fun clicked(pMouseX: Double, pMouseY: Double): Boolean {
         if (pMouseX < x || pMouseX > x + width || pMouseY < y || pMouseY > y + height) return false
-        index++
-        val valid = type.valid
-        if (index == valid.size) index = 0
-        this.state = valid[index]
-        listeners.forEach { it.invoke(this.state) }
+        switch()
         return true
     }
 
@@ -53,6 +50,14 @@ class CargoCheckBox private constructor(val type: Type, initial: State) : Abstra
     fun withListener(f: (State) -> Unit): CargoCheckBox {
         listeners.add(f)
         return this
+    }
+
+    fun switch() {
+        index++
+        val valid = type.valid
+        if (index == valid.size) index = 0
+        this.state = valid[index]
+        listeners.forEach { it.invoke(this.state) }
     }
 
 }

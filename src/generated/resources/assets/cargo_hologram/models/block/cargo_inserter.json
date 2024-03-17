@@ -1,4 +1,4 @@
 {
   "parent": "minecraft:block/sculk_shrieker",
-  "render_type" : "minecraft:cutout"
+  "render_type": "minecraft:cutout"
 }

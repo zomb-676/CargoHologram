@@ -6,7 +6,7 @@ import net.minecraft.world.item.ItemStack
 import net.minecraftforge.items.IItemHandlerModifiable
 import net.minecraftforge.items.wrapper.RecipeWrapper
 
-class WrappedCraftContainer(handle: IItemHandlerModifiable, private val width: Int,private val height: Int) :
+class WrappedCraftContainer(handle: IItemHandlerModifiable, private val width: Int, private val height: Int) :
     RecipeWrapper(handle), CraftingContainer {
 
     override fun fillStackedContents(pContents: StackedContents) {

@@ -15,7 +15,7 @@ import net.minecraftforge.items.ItemStackHandler
 import net.minecraftforge.items.SlotItemHandler
 import kotlin.math.tan
 
-class InserterMenu(containerId: Int, val playerInv: Inventory, pos: BlockPos) :
+class InserterMenu(containerId: Int, val playerInv: Inventory,val pos: BlockPos) :
     AbstractContainerMenu(AllRegisters.Menus.INSERTER_MENU.get(), containerId) {
     override fun quickMoveStack(pPlayer: Player, pIndex: Int): ItemStack {
         return ItemStack.EMPTY

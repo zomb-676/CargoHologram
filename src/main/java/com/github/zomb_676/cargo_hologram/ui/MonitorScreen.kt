@@ -43,7 +43,7 @@ class MonitorScreen : Screen("monitor".literal()), CargoBlurScreen {
         mainArea = cursor.percentX(0.4).percentY(0.8).asAreaImmute()
         searchBar = CargoTextBox()
         this.addRenderableWidget(searchBar)
-        backedButton = CargoCycleButton.of(UIConstant.Paths.buttonSmallDefault, SearchEngine.getBackedType())
+        backedButton = CargoCycleButton.of(UIConstant.Paths.cycleButton, SearchEngine.getBackedType())
             .withListeners { SearchEngine.setBacked(backedButton.currentState()) }
         this.addRenderableWidget(backedButton)
     }

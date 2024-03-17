@@ -54,7 +54,7 @@ class FilterScreen(menu: FilterMenu, inv: Inventory, component: Component) :
         clearButton = CargoButton.of(UIConstant.Paths.widgetRemove)
             .withListeners { SetFilterPack(Optional.empty()).sendToServer() }
         addRenderableWidget(clearButton)
-        modeButton = CargoCycleButton.of(UIConstant.Paths.buttonSmallDefault)
+        modeButton = CargoCycleButton.of(UIConstant.Paths.cycleButton)
         addRenderableWidget(modeButton)
     }
 
