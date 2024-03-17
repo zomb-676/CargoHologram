@@ -40,7 +40,7 @@ object FavouriteItemsEventHandle : BusSubscribe {
     private fun safeQueryMenuTypeIdentify(menu: AbstractContainerMenu): Any = try {
         menu.type
     } catch (e: UnsupportedOperationException) {
-        menu::class.java.simpleName
+        menu::class.java.name
     }
 
 }

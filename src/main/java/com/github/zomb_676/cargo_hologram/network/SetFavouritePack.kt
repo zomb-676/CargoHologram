@@ -9,7 +9,12 @@ import net.minecraft.world.inventory.MenuType
 import net.minecraft.world.item.ItemStack
 import net.minecraftforge.network.NetworkEvent
 import net.minecraftforge.registries.ForgeRegistries
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen
 
+/**
+ * @param menu menu like [CreativeModeInventoryScreen.ItemPickerMenu] doesn't have menu type, so
+ * we should fall back to [String] by [Class.name] from [MenuType]
+ */
 class SetFavouritePack(val menu: Any, val slot: Int, val item: ItemStack, val state: Boolean) :
     NetworkPack<SetFavouritePack> {
     companion object {
