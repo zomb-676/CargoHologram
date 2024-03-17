@@ -2,6 +2,7 @@ package com.github.zomb_676.cargo_hologram
 
 import com.github.zomb_676.cargo_hologram.capability.CapRegisters
 import com.github.zomb_676.cargo_hologram.data.CargoHologramDataGenerator
+import com.github.zomb_676.cargo_hologram.favourite.FavouriteItemsEventHandle
 import com.github.zomb_676.cargo_hologram.network.NetworkHandle
 import com.github.zomb_676.cargo_hologram.trace.ClientResultCache
 import com.github.zomb_676.cargo_hologram.trace.QueryCenter
@@ -13,7 +14,6 @@ import com.mojang.logging.LogUtils
 import net.minecraft.client.gui.screens.MenuScreens
 import net.minecraft.resources.ResourceLocation
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent
-import net.minecraftforge.client.event.RegisterNamedRenderTypesEvent
 import net.minecraftforge.client.event.RenderGuiOverlayEvent
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay
 import net.minecraftforge.fml.common.Mod
@@ -29,8 +29,6 @@ class CargoHologram {
 
         fun rl(path: String) = ResourceLocation(MOD_ID, path)
     }
-
-    lateinit var textures: CargoHologramSpriteUploader
 
     init {
         arrayOf(
@@ -51,8 +49,14 @@ class CargoHologram {
                     ClientResultCache,
                     CargoHologramComponents,
                     BlurHandle,
-                    HighlightLinked
+                    HighlightLinked,
+                    FavouriteItemsEventHandle
                 ).dispatch()
+                Dispatcher<RenderGuiOverlayEvent.Pre> { event ->
+                    if (event.overlay == VanillaGuiOverlay.CROSSHAIR.type() && currentMinecraft().screen is CargoBlurScreen) {
+                        event.isCanceled = true
+                    }
+                }
             }
         }
         NetworkHandle.registerPackets()
@@ -62,21 +66,12 @@ class CargoHologram {
             MenuScreens.register(AllRegisters.Menus.FILTER_MANU.get(), ::FilterScreen)
             MenuScreens.register(AllRegisters.Menus.CARGO_STORAGE_MENU.get(), ::CargoStorageScreen)
             MenuScreens.register(AllRegisters.Menus.INSERTER_MENU.get(), ::InserterScreen)
+            MenuScreens.register(AllRegisters.Menus.PREFER_CONFIGURE_MENU.get(), ::PreferConfigureScreen)
         }
 
         Dispatcher<RegisterClientReloadListenersEvent> { event ->
-            textures = CargoHologramSpriteUploader(currentMinecraft().textureManager)
+            val textures = CargoHologramSpriteUploader(currentMinecraft().textureManager)
             event.registerReloadListener(textures)
-        }
-
-        runOnDistClient {
-            {
-                Dispatcher<RenderGuiOverlayEvent.Pre> { event ->
-                    if (event.overlay == VanillaGuiOverlay.CROSSHAIR.type() && currentMinecraft().screen is CargoBlurScreen) {
-                        event.isCanceled = true
-                    }
-                }
-            }
         }
     }
 }

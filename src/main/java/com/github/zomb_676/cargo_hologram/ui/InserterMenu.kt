@@ -3,6 +3,7 @@ package com.github.zomb_676.cargo_hologram.ui
 import com.github.zomb_676.cargo_hologram.AllRegisters
 import com.github.zomb_676.cargo_hologram.store.blockEntity.CargoStorageBlockEntity
 import com.github.zomb_676.cargo_hologram.store.blockEntity.InserterBlockEntity
+import com.github.zomb_676.cargo_hologram.util.FavouriteItemUtils
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Inventory
@@ -13,11 +14,27 @@ import net.minecraft.world.inventory.Slot
 import net.minecraft.world.item.ItemStack
 import net.minecraftforge.items.ItemStackHandler
 import net.minecraftforge.items.SlotItemHandler
+import net.minecraftforge.items.wrapper.PlayerMainInvWrapper
+import javax.swing.TransferHandler
 import kotlin.math.tan
 
 class InserterMenu(containerId: Int, val playerInv: Inventory,val pos: BlockPos) :
     AbstractContainerMenu(AllRegisters.Menus.INSERTER_MENU.get(), containerId) {
     override fun quickMoveStack(pPlayer: Player, pIndex: Int): ItemStack {
+        val item = this.slots[pIndex].item
+        if (item.isEmpty) return ItemStack.EMPTY
+        if (FavouriteItemUtils.isFavourite(item)) return ItemStack.EMPTY
+        val targetHandle = if (pIndex in 0..<36) {
+            tansHandle
+        } else {
+            PlayerMainInvWrapper(pPlayer.inventory)
+        }
+        var transItem = item.copy()
+        for (slotIndex in 0..<targetHandle.slots) {
+            transItem = targetHandle.insertItem(slotIndex, transItem, false)
+            if (transItem.isEmpty) break
+        }
+        this.slots[pIndex].set(transItem)
         return ItemStack.EMPTY
     }
 
@@ -57,6 +74,7 @@ class InserterMenu(containerId: Int, val playerInv: Inventory,val pos: BlockPos)
         this.transSlots.forEach { slot ->
             var transItem = slot.item
             if (transItem.isEmpty) return@forEach
+            if (FavouriteItemUtils.isFavourite(transItem)) return@forEach
             transItem = transItem.copy()
             val targetHandle = candidate.firstOrNull { it.traitList.test(slot.item) }?.handle ?: return@forEach
             for (index in 0..<targetHandle.slots) {

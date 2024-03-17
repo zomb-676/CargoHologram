@@ -13,7 +13,6 @@ import net.minecraftforge.network.NetworkRegistry
 import net.minecraftforge.network.PacketDistributor
 import org.apache.http.util.Asserts
 import java.util.function.Supplier
-import javax.print.attribute.standard.Media
 
 object NetworkHandle {
 
@@ -117,5 +116,7 @@ object NetworkHandle {
         register(InserterTransformPacket::decode, NetworkDirection.PLAY_TO_SERVER)
         register(SetPriorityPack::decode, NetworkDirection.PLAY_TO_SERVER)
         register(SingleRawResult::decode, NetworkDirection.PLAY_TO_CLIENT)
+        register(SetBlockPreferPacket::decode, NetworkDirection.PLAY_TO_SERVER)
+        register(SetFavouritePack::decode, NetworkDirection.PLAY_TO_SERVER)
     }
 }

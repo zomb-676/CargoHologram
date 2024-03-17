@@ -57,6 +57,7 @@ object CargoStorageHud : BusSubscribe, IGuiOverlay {
                     }
                 } else {
                     draw.string("not linked").nextLine()
+                    draw.string("use Linker to set").nextLine()
                 }
             }
         }

@@ -10,7 +10,7 @@ object UIConstant {
         private fun themeRL(path: String) =
             CargoHologram.rl(path)
 
-        val cycleButton = themeRL("button_small_default")
+        val cycleButton = themeRL("widget_rotate")
 
         val checkboxBanned     = themeRL("checkbox_banned")
         val checkboxChecked    = themeRL("checkbox_checked")

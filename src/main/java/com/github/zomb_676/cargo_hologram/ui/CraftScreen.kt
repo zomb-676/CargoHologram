@@ -22,7 +22,6 @@ class CraftScreen(menu: CraftMenu, inv: Inventory, component: Component) :
     AbstractContainerScreen<CraftMenu>(menu, inv, component), CargoBlurScreen {
 
     private var currentRowIndex = 0
-    private val materialAreas = MutableList(9) { _ -> AreaImmute.ofFullScreen() }
     var hovered: Pair<BlockPos, SlotItemStack>? = null
     var area: AreaImmute? = null
 

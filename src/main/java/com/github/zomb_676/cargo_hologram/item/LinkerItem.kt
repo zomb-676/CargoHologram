@@ -157,7 +157,12 @@ class LinkerItem : Item(Properties().stacksTo(1)) {
         super.appendHoverText(stack, level, componets, isAdvance)
         if (!LinkData.haveTag(stack)) return
         val linked = LinkData.linked(stack)
-        componets += (if (LinkData.isLinking(stack)) "Linking" else "Not Linking").literal()
+        if (LinkData.isLinking(stack)) {
+            componets += "Linking".literal()
+        } else {
+            componets += "Not Linking".literal()
+            componets += "Use Shift + Right Click to begin linking".literal()
+        }
         for ((type, pos) in linked) {
             componets += "pos:${pos.toShortString()} with type:${type.location(ForgeRegistries.BLOCK_ENTITY_TYPES)}".literal()
         }

@@ -91,4 +91,20 @@ class TraitList(traits: List<SpecifiedItemTrait>, mode: TraitMode) : INBTSeriali
             PASS_NONE -> traits.none { it.test(itemStack) }
         }
     }
+
+    fun calcuateSize(): Int {
+        if (traits.isEmpty()) return 36
+        val baseSize = 9.0
+        val modeFactor = if (traits.size == 1) 1.1 else when (mode) {
+            PASS_ANY -> 1.5
+            PASS_ALL -> 1.8
+            PASS_NONE -> 1.2
+        }
+
+        val traitFactor = TraitSizeCalculate.traitFactor(this)
+
+        val result = baseSize * modeFactor * traitFactor
+
+        return result.toInt().coerceAtMost(360)
+    }
 }

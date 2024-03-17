@@ -6,6 +6,7 @@ import com.github.zomb_676.cargo_hologram.store.CargoInserter
 import com.github.zomb_676.cargo_hologram.store.CargoStorage
 import com.github.zomb_676.cargo_hologram.store.blockEntity.CargoStorageBlockEntity
 import com.github.zomb_676.cargo_hologram.store.blockEntity.InserterBlockEntity
+import com.github.zomb_676.cargo_hologram.store.blockEntity.RemoteCraftTableBlockEntity
 import com.github.zomb_676.cargo_hologram.ui.*
 import com.github.zomb_676.cargo_hologram.util.*
 import net.minecraft.core.registries.Registries
@@ -70,6 +71,12 @@ object AllRegisters : BusSubscribe {
                     InserterMenu(windowId, inv, data.readBlockPos())
             }, FeatureFlags.DEFAULT_FLAGS)
         }
+        val PREFER_CONFIGURE_MENU: RegistryObject<MenuType<PreferConfigureMenu>> = MENU.register("prefer_configure") {
+            MenuType(object : IContainerFactory<PreferConfigureMenu> {
+                override fun create(windowId: Int, inv: Inventory, data: FriendlyByteBuf): PreferConfigureMenu =
+                    PreferConfigureMenu(windowId, inv, OpenBy.read(data))
+            }, FeatureFlags.DEFAULT_FLAGS)
+        }
     }
 
 
@@ -108,6 +115,9 @@ object AllRegisters : BusSubscribe {
         }
         val inserter = BLOCK_ENTITY.register("cargo_inserter") {
             BlockEntityType.Builder.of(::InserterBlockEntity, Blocks.cargoInserter.get()).build(null)
+        }
+        val remoteCraftTable = BLOCK_ENTITY.register("remote_table") {
+            BlockEntityType.Builder.of(::RemoteCraftTableBlockEntity, Blocks.remoteCraftTable.get()).build(null)
         }
     }
 
