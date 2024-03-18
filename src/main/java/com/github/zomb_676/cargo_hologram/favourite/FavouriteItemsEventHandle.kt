@@ -2,32 +2,53 @@ package com.github.zomb_676.cargo_hologram.favourite
 
 import com.github.zomb_676.cargo_hologram.CargoHologramSpriteUploader
 import com.github.zomb_676.cargo_hologram.network.SetFavouritePack
+import com.github.zomb_676.cargo_hologram.network.TransformPlayerInvToNearbyPack
 import com.github.zomb_676.cargo_hologram.ui.UIConstant
 import com.github.zomb_676.cargo_hologram.util.*
-import com.github.zomb_676.cargo_hologram.util.cursor.AreaImmute
 import com.github.zomb_676.cargo_hologram.util.interact.InteractHelper
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.BufferUploader
 import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.Tesselator
 import com.mojang.blaze3d.vertex.VertexFormat
+import cpw.mods.modlauncher.api.INameMappingService
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.components.Button
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen
 import net.minecraft.client.renderer.GameRenderer
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.inventory.AbstractContainerMenu
+import net.minecraft.world.inventory.MenuType
+import net.minecraft.world.inventory.Slot
 import net.minecraftforge.client.event.RenderGuiOverlayEvent
 import net.minecraftforge.client.event.ScreenEvent
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay
 import net.minecraftforge.event.entity.player.ItemTooltipEvent
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper
+import net.minecraftforge.registries.ForgeRegistries
 
 object FavouriteItemsEventHandle : BusSubscribe {
+    private val transformWhiteListClasses: MutableSet<Class<*>> = mutableSetOf()
+    private var transformWhiteListMenuType: MutableSet<MenuType<*>> = mutableSetOf()
+
     override fun registerEvent(dispatcher: Dispatcher) {
         dispatcher<ScreenEvent.Init.Post> { event ->
-//            attach auto move button
-//            val button = Button.builder().build()
-//            event.addListener(button)
+            val screen = event.screen as? AbstractContainerScreen<*>? ?: return@dispatcher
+            if (checkInWhiteList(screen)) {
+                val buttonWidth = 16
+                val buttonHeight = 16
+                val align = 5
+                val topOffset = 2
+                val button = Button.builder("Transform All".literal())
+                { TransformPlayerInvToNearbyPack(10).sendToServer() }
+                    .pos(screen.guiLeft - buttonWidth - align, screen.guiTop + topOffset)
+                    .size(buttonWidth, buttonHeight)
+                    .build()
+                event.addListener(button)
+            }
         }
         dispatcher<ScreenEvent.MouseButtonPressed.Pre> { event ->
             if (!InteractHelper.ofButton(event.button).isLeft) return@dispatcher
@@ -37,7 +58,8 @@ object FavouriteItemsEventHandle : BusSubscribe {
             if (!slot.hasItem()) return@dispatcher
             val slotItem = slot.item
             val current = FavouriteItemUtils.isFavourite(slotItem)
-            SetFavouritePack(safeQueryMenuTypeIdentify(screen.menu), slot.index, slotItem, !current).sendToServer()
+            val menu = screen.menu
+            SetFavouritePack(menuTypeIdentify(menu), identifySlotIndex(menu, slot), slotItem, !current).sendToServer()
             event.isCanceled = true
         }
         dispatcher<ItemTooltipEvent> { event ->
@@ -88,8 +110,8 @@ object FavouriteItemsEventHandle : BusSubscribe {
     }
 
     private fun GuiGraphics.drawFavouriteIcon(x: Int, y: Int) {
-        val sprite = AtlasHandle.query(CargoHologramSpriteUploader.ATLAS_LOCATION)
-            .getSprite(UIConstant.Paths.favouriteMark)
+        val sprite =
+            AtlasHandle.query(CargoHologramSpriteUploader.ATLAS_LOCATION).getSprite(UIConstant.Paths.favouriteMark)
 
         val minU = sprite.u0
         val maxU = sprite.u1
@@ -100,13 +122,13 @@ object FavouriteItemsEventHandle : BusSubscribe {
         val pX2 = (x + 8).toFloat()
         val pY1 = y.toFloat()
         val pY2 = (y + 8).toFloat()
-        val z  = 300.0f
+        val z = 300.0f
 
         RenderSystem.setShaderTexture(0, CargoHologramSpriteUploader.ATLAS_LOCATION)
         RenderSystem.setShader(GameRenderer::getPositionTexShader)
         RenderSystem.enableBlend()
         RenderSystem.defaultBlendFunc()
-        val matrix =  this.pose().last().pose()
+        val matrix = this.pose().last().pose()
         val buffer = Tesselator.getInstance().builder
         buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
         buffer.vertex(matrix, pX1, pY1, z).uv(minU, minV).endVertex()
@@ -117,10 +139,69 @@ object FavouriteItemsEventHandle : BusSubscribe {
         RenderSystem.disableBlend()
     }
 
-    private fun safeQueryMenuTypeIdentify(menu: AbstractContainerMenu): Any = try {
+    private fun menuTypeIdentify(menu: AbstractContainerMenu): Any = try {
         menu.type
     } catch (e: UnsupportedOperationException) {
         menu::class.java.simpleName
+    }
+
+    private fun identifySlotIndex(menu: AbstractContainerMenu, slot: Slot): Int =
+        if (menu is CreativeModeInventoryScreen.ItemPickerMenu) {
+            slot.containerSlot
+        } else {
+            slot.index
+        }
+
+    fun loadTransformButtonWhiteList(classes: List<String>) {
+        transformWhiteListClasses.clear()
+        transformWhiteListMenuType.clear()
+        for (candidate in classes) {
+            if (candidate.contains(":")) {
+                val location = try {
+                    ResourceLocation(candidate)
+                } catch (e: Exception) {
+                    log { error("$candidate is not a valid ResourceLocation") }
+                    continue
+                }
+                val menuType = try {
+                    location.query(ForgeRegistries.MENU_TYPES)
+                } catch (e: Exception) {
+                    log { error("can't find $candidate as valid MenuType") }
+                    continue
+                }
+                transformWhiteListMenuType.add(menuType)
+            } else {
+                val obf = ObfuscationReflectionHelper.remapName(INameMappingService.Domain.CLASS, candidate)
+                val directClass = try {
+                    Class.forName(obf)
+                } catch (e: Exception) {
+                    log { error("can't find class:${obf} tried obfuscated from $candidate") }
+                    continue
+                }
+                var checkClass: Class<*>? = directClass
+                check@ while (checkClass != null) {
+                    checkClass = checkClass.superclass
+                    if (AbstractContainerScreen::class.java == checkClass)
+                        break@check
+                }
+                if (checkClass == null) {
+                    log { error("$directClass is not sub class of AbstractContainerScreen") }
+                } else {
+
+                    transformWhiteListClasses.add(directClass)
+                }
+            }
+        }
+    }
+
+    private fun checkInWhiteList(screen: AbstractContainerScreen<*>): Boolean {
+        if (transformWhiteListClasses.contains(screen::class.java)) return true
+        val type = try {
+            screen.menu.type
+        } catch (e: Exception) {
+            return false
+        }
+        return transformWhiteListMenuType.contains(type)
     }
 
 }

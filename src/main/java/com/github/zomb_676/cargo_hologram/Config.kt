@@ -1,5 +1,6 @@
 package com.github.zomb_676.cargo_hologram
 
+import com.github.zomb_676.cargo_hologram.favourite.FavouriteItemsEventHandle
 import com.github.zomb_676.cargo_hologram.selector.Selector
 import com.github.zomb_676.cargo_hologram.trace.GlobalFilter
 import com.github.zomb_676.cargo_hologram.ui.CargoBlurScreen
@@ -54,8 +55,8 @@ data object Config : BusSubscribe {
             "in code subclass of RandomizableContainerBlockEntity support this in vanilla"
         ).define("allow_loot_chest", false)
 
-        private val GIVE_UI_STICK_AND_MESSAGE_FIRST_LOGIN = BUILDER
-            .define("give_ui_stick_and_message_first_login", true)
+        private val GIVE_UI_STICK_AND_MESSAGE_FIRST_LOGIN =
+            BUILDER.define("give_ui_stick_and_message_first_login", true)
 
         private val SPEC: ForgeConfigSpec = BUILDER.build()
 
@@ -116,12 +117,16 @@ data object Config : BusSubscribe {
         private val BLUR_EXPAND_Y = BUILDER.defineInRange("blur_expand_y", 10, 0, Int.MAX_VALUE)
         private val BLUR_BG_ALPHA = BUILDER.defineInRange("blur_bg_alpha", 0x7f, 0, 0xff)
         private val BLUR_OUTLINE = BUILDER.define("blur_outline", true)
-        val SEARCH_BACKEND = BUILDER.pop()
-            .comment(
-                "if set JEI, search will be filtered by jei search result, and fallback to mod if jei is not installed",
-                "mod support search tag begin with # and mod name begin with @"
-            )
-            .defineEnum("search_backend", SearchEngine.Type.JEI)
+        val SEARCH_BACKEND = BUILDER.pop().comment(
+            "if set JEI, search will be filtered by jei search result, and fallback to mod if jei is not installed",
+            "mod support search tag begin with # and mod name begin with @"
+        ).defineEnum("search_backend", SearchEngine.Type.JEI)
+
+        private val TRANSFORM_WHITELIST: ForgeConfigSpec.ConfigValue<MutableList<out String>> =
+            BUILDER.push("transform button").comment("support MenuType(don't skip namespace part) and Class name")
+                .defineList(
+                    "transform_white_list_class", listOf("net.minecraft.client.gui.screens.inventory.InventoryScreen")
+                ) { true }
 
         private val SPEC: ForgeConfigSpec = BUILDER.build()
 
@@ -141,6 +146,8 @@ data object Config : BusSubscribe {
             BlurConfigure.blurBgAlpha = BLUR_BG_ALPHA.get()
             BlurConfigure.blurOutline = BLUR_OUTLINE.get()
             SearchEngine.setBacked(SEARCH_BACKEND.get())
+
+            FavouriteItemsEventHandle.loadTransformButtonWhiteList(TRANSFORM_WHITELIST.get())
         }
 
         fun saveBlurConfigure() {

@@ -1,6 +1,7 @@
 package com.github.zomb_676.cargo_hologram.network
 
 import com.github.zomb_676.cargo_hologram.store.blockEntity.CargoStorageBlockEntity
+import com.github.zomb_676.cargo_hologram.util.FavouriteItemUtils
 import com.github.zomb_676.cargo_hologram.util.near
 import com.github.zomb_676.cargo_hologram.util.toChunkPos
 import net.minecraft.network.FriendlyByteBuf
@@ -27,14 +28,29 @@ class TransformPlayerInvToNearbyPack(val distance: Int) : NetworkPack<TransformP
             val playerPos = sender.blockPosition()
             val invWrapper = InvWrapper(sender.inventory)
             val level = sender.level()
-            val s = playerPos.toChunkPos()
-                .near(distance / 16)
-                .filter { level.hasChunk(it.x,it.z) }
-                .map { level.getChunk(it.x,it.z).blockEntities.entries }
+            val blockEntities = playerPos.toChunkPos()
+                .near((distance / 16) + 1)
+                .filter { level.hasChunk(it.x, it.z) }
+                .map { level.getChunk(it.x, it.z).blockEntities.entries }
                 .flatten()
-                .filter { it.value is CargoStorageBlockEntity }
-                .filter { it.key.distSqr(playerPos) <= distance }
+                .filter { it.value.getCapability(ForgeCapabilities.ITEM_HANDLER).isPresent }
+                .filter { it.key.distSqr(playerPos) <= (distance * distance).toDouble() }
                 .sortedBy { it.key.distSqr(playerPos) }
+                .map { it.value as? CargoStorageBlockEntity? }
+                .filterNotNull()
+                .toList()
+            inv@ for (invIndex in 0..<invWrapper.slots) {
+                var transItem = invWrapper.getStackInSlot(invIndex)
+                if (transItem.isEmpty) continue@inv
+                if (FavouriteItemUtils.isFavourite(transItem)) continue@inv
+                transItem = transItem.copy()
+                val handle = blockEntities.firstOrNull { it.traitList.test(transItem) }?.handle ?: continue@inv
+                trans@ for (containerSlot in 0..<handle.slots) {
+                    transItem = handle.insertItem(containerSlot, transItem, false)
+                    if (transItem.isEmpty) break@trans
+                }
+                invWrapper.setStackInSlot(invIndex, transItem)
+            }
         }
     }
 

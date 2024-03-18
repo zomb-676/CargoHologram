@@ -139,8 +139,7 @@ inline fun ChunkPos.near(radius: Int, function: (ChunkPos) -> Unit) {
 }
 
 fun ChunkPos.near(radius: Int): Sequence<ChunkPos> {
-    if (radius < 0) return emptySequence()
-    if (radius == 1) return sequenceOf(this)
+    if (radius == 0) return sequenceOf(this)
     val beginX = this.x - radius
     val beginZ = this.z - radius
     val endX = this.x + radius
@@ -149,7 +148,7 @@ fun ChunkPos.near(radius: Int): Sequence<ChunkPos> {
         var x = beginX
         var z = beginZ
         override fun hasNext(): Boolean =
-            x <= endX && z <= endZ
+            x <= endX && z < endZ
 
         override fun next(): ChunkPos {
             x++
