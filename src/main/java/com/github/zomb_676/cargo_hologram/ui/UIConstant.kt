@@ -19,5 +19,7 @@ object UIConstant {
         val widgetNext         = themeRL("widget_next")
         val widgetRemove       = themeRL("widget_remove")
         val widgetSave         = themeRL("widget_save")
+
+        val favouriteMark = themeRL("favourite_mark")
     }
 }
