@@ -10,12 +10,13 @@ import net.minecraft.world.item.ItemStack
 import net.minecraftforge.network.NetworkEvent
 import net.minecraftforge.registries.ForgeRegistries
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen
+import net.minecraft.world.inventory.InventoryMenu
 
 /**
  * @param menu menu like [CreativeModeInventoryScreen.ItemPickerMenu] doesn't have menu type, so
  * we should fall back to [String] by [Class.name] from [MenuType]
  */
-class SetFavouritePack(val menu: Any, val slot: Int, val item: ItemStack, val state: Boolean) :
+class SetFavouritePack(val menu: Any, val slotIndex: Int, val item: ItemStack, val state: Boolean) :
     NetworkPack<SetFavouritePack> {
     companion object {
         fun decode(buffer: FriendlyByteBuf): SetFavouritePack {
@@ -45,7 +46,7 @@ class SetFavouritePack(val menu: Any, val slot: Int, val item: ItemStack, val st
 
             else -> throw RuntimeException()
         }
-        buffer.writeVarInt(slot)
+        buffer.writeVarInt(slotIndex)
         buffer.writeItemStack(item, false)
         buffer.writeBoolean(state)
     }
@@ -54,7 +55,7 @@ class SetFavouritePack(val menu: Any, val slot: Int, val item: ItemStack, val st
         context.enqueueWork {
             val container = context.sender?.containerMenu ?: return@enqueueWork
             if (!checkMenuType(container)) return@enqueueWork
-            val slot = container.getSlot(slot)
+            val slot = container.getSlot(slotIndex)
             val slotItem = slot.item
             if (ItemStack.isSameItem(slotItem, item)) {
                 FavouriteItemUtils.setFavourite(slotItem, state)
@@ -64,7 +65,8 @@ class SetFavouritePack(val menu: Any, val slot: Int, val item: ItemStack, val st
 
     private fun checkMenuType(another: AbstractContainerMenu): Boolean = when (menu) {
         is MenuType<*> -> menu == another.type
-        is String -> menu == another::class.java.name
+        "ItemPickerMenu" -> another is InventoryMenu
+        is String -> menu == another::class.java.simpleName
         else -> throw RuntimeException()
     }
 

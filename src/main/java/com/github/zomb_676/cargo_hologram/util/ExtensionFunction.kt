@@ -21,7 +21,6 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.ItemLike
 import net.minecraft.world.level.Level
-import net.minecraft.world.level.block.Block
 import net.minecraftforge.api.distmarker.Dist
 import net.minecraftforge.fml.DistExecutor
 import net.minecraftforge.fml.loading.FMLEnvironment
@@ -139,6 +138,32 @@ inline fun ChunkPos.near(radius: Int, function: (ChunkPos) -> Unit) {
     }
 }
 
+fun ChunkPos.near(radius: Int): Sequence<ChunkPos> {
+    if (radius < 0) return emptySequence()
+    if (radius == 1) return sequenceOf(this)
+    val beginX = this.x - radius
+    val beginZ = this.z - radius
+    val endX = this.x + radius
+    val endZ = this.z + radius
+    return object : Iterator<ChunkPos> {
+        var x = beginX
+        var z = beginZ
+        override fun hasNext(): Boolean =
+            x <= endX && z <= endZ
+
+        override fun next(): ChunkPos {
+            x++
+            if (x > endX) {
+                x = beginX
+                z++
+                if (z > endZ) throw RuntimeException("no next")
+            }
+            return ChunkPos(x,z)
+        }
+
+    }.asSequence()
+}
+
 inline fun inlineAssert(check: Boolean, codeBlock: () -> String) {
     if (!check) {
         throw AssertionError(codeBlock())
@@ -195,7 +220,7 @@ fun GuiGraphics.fillRelative(x: Int, y: Int, width: Int, height: Int, color: ARG
     this.fill(x, y, x + width, y + height, color.color)
 }
 
-inline fun PoseStack.layer(code : () -> Unit) {
+inline fun PoseStack.layer(code: () -> Unit) {
     this.pushPose()
     code()
     this.popPose()

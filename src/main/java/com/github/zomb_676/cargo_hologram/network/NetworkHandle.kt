@@ -118,5 +118,6 @@ object NetworkHandle {
         register(SingleRawResult::decode, NetworkDirection.PLAY_TO_CLIENT)
         register(SetBlockPreferPacket::decode, NetworkDirection.PLAY_TO_SERVER)
         register(SetFavouritePack::decode, NetworkDirection.PLAY_TO_SERVER)
+        register(TransformPlayerInvToNearbyPack::decode, NetworkDirection.PLAY_TO_SERVER)
     }
 }

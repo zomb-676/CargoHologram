@@ -8,7 +8,7 @@ import java.util.function.Predicate
 
 object SearchEngine {
 
-    private var backedType : Type = Type.JEI
+    private var backedType: Type = Type.JEI
 
     enum class Type {
         JEI, SELF
@@ -27,7 +27,7 @@ object SearchEngine {
                     match = update()
                 }
             }
-        private val ALWAYS_PASS : Predicate<ItemStack> = Predicate { true }
+        private val ALWAYS_PASS: Predicate<ItemStack> = Predicate { true }
         private var match: Predicate<ItemStack> = ALWAYS_PASS
 
         private fun update(): Predicate<ItemStack> {
@@ -68,9 +68,13 @@ object SearchEngine {
 
     fun setBacked(type: Type) {
         if (type != Type.JEI) {
-            val backed = getBacked()
-            if (backed != SelfBacked) {
-                backed.searchText = ""
+            try {
+                val backed = getBacked()
+                if (backed != SelfBacked) {
+                    backed.searchText = ""
+                }
+            } catch (ignored: NullPointerException) {
+                //jei search filter is not available when config load
             }
         }
         this.backedType = type
