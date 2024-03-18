@@ -14,6 +14,7 @@ object FavouriteItemUtils {
     }
 
     fun isFavourite(item: ItemStack): Boolean {
+        if (item.isEmpty) return false
         val tag = item.tag ?: return false
         return tag.contains(COMPOUND_FAVOURITE_KEY) && tag.getBoolean(COMPOUND_FAVOURITE_KEY)
     }

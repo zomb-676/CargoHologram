@@ -79,7 +79,7 @@ object FavouriteItemsEventHandle : BusSubscribe {
             for (hotBarIndex in 0..<9) {
                 val item = items[hotBarIndex]
                 if (FavouriteItemUtils.isFavourite(item)) {
-                    val pX = halfScreenWidth - 90 + hotBarIndex * 2 + 2
+                    val pX = halfScreenWidth - 90 + hotBarIndex * 20 + 2
                     val pY = screenHeight - 16 - 3
                     guiGraphics.drawFavouriteIcon(pX, pY)
                 }
@@ -88,8 +88,6 @@ object FavouriteItemsEventHandle : BusSubscribe {
     }
 
     private fun GuiGraphics.drawFavouriteIcon(x: Int, y: Int) {
-        AreaImmute.ofRelative(x, y, 8, 8).asBaseCursor()
-            .forDraw(this).fillCargoWidget(UIConstant.Paths.favouriteMark)
         val sprite = AtlasHandle.query(CargoHologramSpriteUploader.ATLAS_LOCATION)
             .getSprite(UIConstant.Paths.favouriteMark)
 
@@ -108,7 +106,6 @@ object FavouriteItemsEventHandle : BusSubscribe {
         RenderSystem.setShader(GameRenderer::getPositionTexShader)
         RenderSystem.enableBlend()
         RenderSystem.defaultBlendFunc()
-        RenderSystem.disableDepthTest()
         val matrix =  this.pose().last().pose()
         val buffer = Tesselator.getInstance().builder
         buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
