@@ -23,9 +23,14 @@ object CapRegisters : BusSubscribe {
         CapabilityManager.get(object : CapabilityToken<PlayerFirstTake>() {})
     private val PLAYER_FIRST_TAKE_PATH = CargoHologram.rl("player_first_take")
 
+    val CARGO_ENERGY_ITEM: Capability<CargoEnergyItemCapability> =
+        CapabilityManager.get(object : CapabilityToken<CargoEnergyItemCapability>() {})
+    private val CARGO_ENERGY_ITEM_PATH = CargoHologram.rl("cargo_energy_item")
+
     override fun registerEvent(dispatcher: Dispatcher) {
         dispatcher<RegisterCapabilitiesEvent> { event ->
             event.register(PlayerFirstTake::class.java)
+            event.register(CargoEnergyItemCapability::class.java)
         }
         dispatcher<AttachCapabilitiesEvent<Entity>, _> { event ->
             val obj = event.`object`
@@ -54,18 +59,42 @@ object CapRegisters : BusSubscribe {
                 }
             }
         }
+
+        dispatcher<AttachCapabilitiesEvent<ItemStack>, _> { event ->
+            val obj = event.`object`
+            if (obj.item == AllRegisters.Items.monitor.get()) {
+                if (!obj.getCapability(CARGO_ENERGY_ITEM).isPresent) {
+                    event.addCapability(CARGO_ENERGY_ITEM_PATH, CargoEnergyItemProvider())
+                }
+            }
+        }
     }
 
-    @Suppress("UNCHECKED_CAST")
     class PlayerFirstTakeProvider : ICapabilityProvider, INBTSerializable<CompoundTag> {
         private val instance = PlayerFirstTake()
         override fun <T : Any> getCapability(cap: Capability<T>, side: Direction?): LazyOptional<T> = getCapability(cap)
         override fun <T : Any> getCapability(cap: Capability<T>): LazyOptional<T> =
             if (cap == PLAYER_FIRST_TAKE) {
-                LazyOptional.of { instance as T }
+                LazyOptional.of { instance }.cast()
             } else LazyOptional.empty()
 
         override fun serializeNBT(): CompoundTag = CompoundTag().apply { instance.saveNBTData(this) }
         override fun deserializeNBT(nbt: CompoundTag) = instance.loadNBTData(nbt)
+    }
+
+    class CargoEnergyItemProvider(val instance : CargoEnergyItemCapability) : ICapabilityProvider, INBTSerializable<CompoundTag> {
+        constructor() : this(CargoEnergyItemCapability(10000,0))
+
+        override fun <T : Any> getCapability(cap: Capability<T>, side: Direction?): LazyOptional<T> = getCapability(cap)
+        override fun <T : Any> getCapability(cap: Capability<T>): LazyOptional<T> =
+//            if (cap == CARGO_ENERGY_ITEM || cap == ForgeCapabilities.ENERGY) {
+            if (cap == ForgeCapabilities.ENERGY) {
+                LazyOptional.of { instance }.cast()
+            } else LazyOptional.empty()
+
+        override fun serializeNBT(): CompoundTag = instance.serializeNBT()
+
+        override fun deserializeNBT(nbt: CompoundTag) = instance.deserializeNBT(nbt)
+
     }
 }

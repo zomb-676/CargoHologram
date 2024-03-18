@@ -58,6 +58,43 @@ data object Config : BusSubscribe {
         private val GIVE_UI_STICK_AND_MESSAGE_FIRST_LOGIN =
             BUILDER.define("give_ui_stick_and_message_first_login", true)
 
+        private val MONITOR_MAX_DAMAGE = BUILDER.push("consume")
+            .define("monitor_max_damage", 10000)
+
+        private val CRAFTER_MAX_DAMAGE = BUILDER
+            .define("crafter_max_damage", 100000)
+
+        private val PER_OPEN_CONSUME = BUILDER
+            .define("per_open_consume", 10)
+
+        private val PER_TICK_OPEN_CONSUME = BUILDER
+            .define("per_tick_open_consume", 0)
+
+        private val PER_ITEM_TAKE_CONSUME = BUILDER
+            .comment("count like bundle, un-stackable item is regarded as 64 normal stack items")
+            .define("per_item_take_consume", 5)
+
+        private val PER_CRAFT_CONSUME = BUILDER
+            .comment("count like bundle, un-stackable item is regarded as 64 normal stack items")
+            .define("per_item_craft_consume", 10)
+
+        private val ITEM_POWER_VALUE = BUILDER
+            .comment("1", "")
+            .defineList("item_power_value", listOf("1")) { true }
+
+        private val FULE_POWE_BY_BURN_TIME = BUILDER
+            .comment("burn tick(count in tick) * ration, for ration with zero, will disable")
+            .define("fuel_power_by_burn_time", "5.0")
+
+        private val RF_POWER_RATE = BUILDER.push("energy_power")
+            .define("rf_power_rate", 2.0)
+
+        private val FORGE_ENERGY_POWER_RATE = BUILDER.push("forge_energy_power_rate")
+            .define("forge_energy_power_rate", 1.0)
+
+        private val next = BUILDER.pop().pop()
+
+
         private val SPEC: ForgeConfigSpec = BUILDER.build()
 
         override fun registerEvent(dispatcher: Dispatcher) {
