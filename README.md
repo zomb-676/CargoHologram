@@ -13,7 +13,7 @@ all the containers just to take or store items anymore
 
 ---
 
-### BuildIn Blur Background support
+### Build-in Blur Background support
 
 All UI in this mod all have adjustable blur background, you can configure this
 by build in commands or the `UI configure stick` which will be given to player
@@ -82,6 +82,6 @@ used to store a list of Item Trait, support:
 
 ## Also
 
-This mod may lack some balance, you can configure some staffs in
+This mod may lack some balance, you can configure some stuffs in
 config files or use other mod to adjust recipes. If they can't satisfy you,
 welcome to open an issue or a pull-request. Just keep your manners please.
