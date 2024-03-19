@@ -21,7 +21,9 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.ItemLike
 import net.minecraft.world.level.Level
+import net.minecraft.world.phys.Vec3
 import net.minecraftforge.api.distmarker.Dist
+import net.minecraftforge.common.util.LazyOptional
 import net.minecraftforge.fml.DistExecutor
 import net.minecraftforge.fml.loading.FMLEnvironment
 import net.minecraftforge.network.NetworkDirection
@@ -30,6 +32,7 @@ import net.minecraftforge.server.ServerLifecycleHooks
 import org.apache.http.util.Asserts
 import org.slf4j.Logger
 import java.util.*
+import kotlin.math.sqrt
 
 fun String.literal(): MutableComponent = Component.literal(this)
 fun String.translate() = Component.translatable(this)
@@ -157,7 +160,7 @@ fun ChunkPos.near(radius: Int): Sequence<ChunkPos> {
                 z++
                 if (z > endZ) throw RuntimeException("no next")
             }
-            return ChunkPos(x,z)
+            return ChunkPos(x, z)
         }
 
     }.asSequence()
@@ -224,3 +227,12 @@ inline fun PoseStack.layer(code: () -> Unit) {
     code()
     this.popPose()
 }
+
+fun Vec3.distanceTo(pos: BlockPos): Double {
+    val dx = pos.x - this.x
+    val dy = pos.y - this.y
+    val dz = pos.z - this.z
+    return sqrt(dx * dx + dy * dy + dz * dz)
+}
+
+fun <T> LazyOptional<T>.retrive(): T? = this.resolve().orElse(null)

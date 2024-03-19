@@ -42,6 +42,9 @@ sealed class OpenBy {
         return this
     }
 
+    fun playerPosition() = player.position()
+    fun playerBlockPosition() = player.blockPosition()
+
     abstract fun write(buffer: FriendlyByteBuf)
 
     @OverridingMethodsMustInvokeSuper
@@ -85,6 +88,16 @@ sealed class OpenBy {
             buffer.writeItem(item)
             buffer.writeVarInt(slot)
         }
+
+        fun holdItem() = player.inventory.getSelected()
+        fun stillHold() = ItemStack.isSameItem(holdItem(), item)
+
+        inline fun holdAnd(f: (ItemStack).() -> Boolean): Boolean {
+            val hold = holdItem()
+            return if (ItemStack.isSameItem(hold, item)) {
+                f(hold)
+            } else false
+        }
     }
 
     class ByBlock(val pos: BlockPos, val state: BlockState, val levelKey: ResourceKey<Level>) : OpenBy() {
@@ -108,16 +121,14 @@ sealed class OpenBy {
         }
 
         fun distance(player: Player, distance: Int = 10): Boolean {
-            if (player.position()
-                    .distanceToSqr(pos.x.toDouble(), pos.y.toDouble(), pos.z.toDouble()) > distance
-            ) return false
+            if (player.position().distanceTo(pos) > distance) return false
             val level = player.level()
-            if (level.dimension() != level) return false
+            if (level.dimension() != level.dimension()) return false
             if (level.getBlockState(pos) != state) return false
             return true
         }
 
-        inline fun <reified T : BlockEntity> expect(): T = when (val be = blockEntity) {
+        inline fun <reified T : BlockEntity> expectBlockEntity(): T = when (val be = blockEntity) {
             is T -> be
             null -> throw AssertionError("$levelKey at pos:$pos have not a blockEntity")
             else -> throw AssertionError("expect:${T::class.simpleName}, actual ${be::class.simpleName}")

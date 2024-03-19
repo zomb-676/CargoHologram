@@ -1,6 +1,6 @@
 package com.github.zomb_676.cargo_hologram.item
 
-import com.github.zomb_676.cargo_hologram.store.blockEntity.RemoteCraftTableBlockEntity
+import com.github.zomb_676.cargo_hologram.blockEntity.RemoteCraftTableBlockEntity
 import com.github.zomb_676.cargo_hologram.ui.CraftMenu
 import com.github.zomb_676.cargo_hologram.ui.PreferConfigureMenu
 import com.github.zomb_676.cargo_hologram.util.OpenBy
@@ -43,7 +43,7 @@ class RemoteCraftTable : Block(Properties.of()), EntityBlock {
             ): AbstractContainerMenu = if (pPlayer.isShiftKeyDown) {
                 PreferConfigureMenu(pContainerId, pPlayerInventory, openBy)
             } else {
-                CraftMenu(pContainerId, pPlayerInventory)
+                CraftMenu(pContainerId, pPlayerInventory, openBy)
             }
 
             override fun getDisplayName(): Component = "".literal()

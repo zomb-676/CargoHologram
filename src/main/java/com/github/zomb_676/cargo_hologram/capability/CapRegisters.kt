@@ -3,7 +3,7 @@ package com.github.zomb_676.cargo_hologram.capability
 import com.github.zomb_676.cargo_hologram.AllRegisters
 import com.github.zomb_676.cargo_hologram.AllTranslates
 import com.github.zomb_676.cargo_hologram.CargoHologram
-import com.github.zomb_676.cargo_hologram.Config
+import com.github.zomb_676.cargo_hologram.Config.Server
 import com.github.zomb_676.cargo_hologram.util.BusSubscribe
 import com.github.zomb_676.cargo_hologram.util.Dispatcher
 import net.minecraft.core.Direction
@@ -25,7 +25,7 @@ object CapRegisters : BusSubscribe {
 
     val CARGO_ENERGY_ITEM: Capability<CargoEnergyItemCapability> =
         CapabilityManager.get(object : CapabilityToken<CargoEnergyItemCapability>() {})
-    private val CARGO_ENERGY_ITEM_PATH = CargoHologram.rl("cargo_energy_item")
+    val CARGO_ENERGY_ITEM_PATH = CargoHologram.rl("cargo_energy_item")
 
     override fun registerEvent(dispatcher: Dispatcher) {
         dispatcher<RegisterCapabilitiesEvent> { event ->
@@ -51,7 +51,7 @@ object CapRegisters : BusSubscribe {
         }
         dispatcher<PlayerEvent.PlayerLoggedInEvent> { event ->
             event.entity.getCapability(PLAYER_FIRST_TAKE).ifPresent { cap ->
-                if (!cap.isPlayerFirstTake && Config.Server.giveUIStickAndMessageFirstLogin) {
+                if (!cap.isPlayerFirstTake && Server.giveUIStickAndMessageFirstLogin) {
                     if (event.entity.inventory.add(ItemStack(AllRegisters.Items.configureUIStick.get()))) {
                         cap.isPlayerFirstTake = true
                     }
@@ -63,9 +63,9 @@ object CapRegisters : BusSubscribe {
         dispatcher<AttachCapabilitiesEvent<ItemStack>, _> { event ->
             val obj = event.`object`
             if (obj.item == AllRegisters.Items.monitor.get()) {
-                if (!obj.getCapability(CARGO_ENERGY_ITEM).isPresent) {
-                    event.addCapability(CARGO_ENERGY_ITEM_PATH, CargoEnergyItemProvider())
-                }
+                event.addCapability(CARGO_ENERGY_ITEM_PATH, CargoEnergyItemProvider.ofMax(Server.monitorMaxDamage))
+            } else if (obj.item == AllRegisters.Items.crafter.get()) {
+                event.addCapability(CARGO_ENERGY_ITEM_PATH, CargoEnergyItemProvider.ofMax(Server.crafterMaxDamage))
             }
         }
     }
@@ -82,13 +82,18 @@ object CapRegisters : BusSubscribe {
         override fun deserializeNBT(nbt: CompoundTag) = instance.loadNBTData(nbt)
     }
 
-    class CargoEnergyItemProvider(val instance : CargoEnergyItemCapability) : ICapabilityProvider, INBTSerializable<CompoundTag> {
-        constructor() : this(CargoEnergyItemCapability(10000,0))
+    class CargoEnergyItemProvider(val instance: CargoEnergyItemCapability) : ICapabilityProvider,
+        INBTSerializable<CompoundTag> {
+        constructor(max: Int, current: Int) : this(CargoEnergyItemCapability(max, current))
+
+        companion object {
+            fun ofMax(max: Int) = CargoEnergyItemProvider(max, 0)
+            fun ofMaxFull(max: Int) = CargoEnergyItemProvider(max, max)
+        }
 
         override fun <T : Any> getCapability(cap: Capability<T>, side: Direction?): LazyOptional<T> = getCapability(cap)
         override fun <T : Any> getCapability(cap: Capability<T>): LazyOptional<T> =
-//            if (cap == CARGO_ENERGY_ITEM || cap == ForgeCapabilities.ENERGY) {
-            if (cap == ForgeCapabilities.ENERGY) {
+            if (cap == CARGO_ENERGY_ITEM || cap == ForgeCapabilities.ENERGY) {
                 LazyOptional.of { instance }.cast()
             } else LazyOptional.empty()
 

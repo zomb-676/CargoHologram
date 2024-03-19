@@ -1,4 +1,4 @@
-package com.github.zomb_676.cargo_hologram.store.blockEntity
+package com.github.zomb_676.cargo_hologram.blockEntity
 
 import com.github.zomb_676.cargo_hologram.AllRegisters
 import com.github.zomb_676.cargo_hologram.item.LinkerItem

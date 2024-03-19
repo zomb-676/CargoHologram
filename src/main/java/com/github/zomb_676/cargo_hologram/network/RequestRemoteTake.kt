@@ -1,5 +1,6 @@
 package com.github.zomb_676.cargo_hologram.network
 
+import com.github.zomb_676.cargo_hologram.ConsumeEnergyEventHandle
 import com.github.zomb_676.cargo_hologram.util.SlotItemStack
 import com.github.zomb_676.cargo_hologram.util.dim
 import net.minecraft.core.BlockPos
@@ -44,7 +45,7 @@ class RequestRemoteTake(
 
     override fun handle(context: NetworkEvent.Context) {
         context.enqueueWork {
-            var success: Boolean = false
+            var success = false
             val blockEntity = level.dim().getBlockEntity(pos)
             blockEntity?.getCapability(ForgeCapabilities.ITEM_HANDLER)?.ifPresent { handle ->
                 val takeSlot = slotItem.slot
@@ -53,6 +54,7 @@ class RequestRemoteTake(
                     if (!item.isEmpty) {
                         if (item.equals(slotItem.itemStack, false)) {
                             val extractItem = handle.extractItem(takeSlot, takeCount, false)
+                            ConsumeEnergyEventHandle.takeConsume(extractItem, context.sender!!)
                             giveOrThrow(context.sender!!, extractItem)
                             success = true
                         }

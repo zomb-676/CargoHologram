@@ -1,7 +1,7 @@
 package com.github.zomb_676.cargo_hologram.ui
 
-import com.github.zomb_676.cargo_hologram.store.blockEntity.CargoStorageBlockEntity
-import com.github.zomb_676.cargo_hologram.store.blockEntity.InserterBlockEntity
+import com.github.zomb_676.cargo_hologram.blockEntity.CargoStorageBlockEntity
+import com.github.zomb_676.cargo_hologram.blockEntity.InserterBlockEntity
 import com.github.zomb_676.cargo_hologram.util.BusSubscribe
 import com.github.zomb_676.cargo_hologram.util.Dispatcher
 import com.github.zomb_676.cargo_hologram.util.currentClientPlayer

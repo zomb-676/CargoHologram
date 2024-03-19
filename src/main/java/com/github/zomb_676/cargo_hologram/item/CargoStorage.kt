@@ -1,6 +1,6 @@
-package com.github.zomb_676.cargo_hologram.store
+package com.github.zomb_676.cargo_hologram.item
 
-import com.github.zomb_676.cargo_hologram.store.blockEntity.CargoStorageBlockEntity
+import com.github.zomb_676.cargo_hologram.blockEntity.CargoStorageBlockEntity
 import com.github.zomb_676.cargo_hologram.ui.CargoStorageMenu
 import com.github.zomb_676.cargo_hologram.util.literal
 import net.minecraft.core.BlockPos
@@ -25,37 +25,30 @@ class CargoStorage : Block(Properties.of()), EntityBlock {
 
     @Suppress("OVERRIDE_DEPRECATION")
     override fun use(
-        pState: BlockState,
-        pLevel: Level,
-        pPos: BlockPos,
-        pPlayer: Player,
-        pHand: InteractionHand,
-        pHit: BlockHitResult,
+        state: BlockState,
+        level: Level,
+        pos: BlockPos,
+        player: Player,
+        hand: InteractionHand,
+        hit: BlockHitResult,
     ): InteractionResult {
-        if (pLevel.isClientSide) return InteractionResult.SUCCESS
-        NetworkHooks.openScreen(pPlayer as ServerPlayer, object : MenuProvider {
+        if (level.isClientSide) return InteractionResult.SUCCESS
+        NetworkHooks.openScreen(player as ServerPlayer, object : MenuProvider {
             override fun createMenu(
                 pContainerId: Int,
                 pPlayerInventory: Inventory,
                 pPlayer: Player,
-            ): AbstractContainerMenu =
-                CargoStorageMenu(pContainerId, pPlayerInventory, pPos)
+            ): AbstractContainerMenu = CargoStorageMenu(pContainerId, pPlayerInventory, pos)
 
             override fun getDisplayName(): Component = "".literal()
-        }, pPos)
+        }, pos)
         return InteractionResult.CONSUME
     }
 
     @Suppress("OVERRIDE_DEPRECATION")
-    override fun onRemove(
-        pState: BlockState,
-        pLevel: Level,
-        pPos: BlockPos,
-        pNewState: BlockState,
-        pMovedByPiston: Boolean,
-    ) {
-        val blockEntity = pLevel.getBlockEntity(pPos) as CargoStorageBlockEntity? ?: return
+    override fun onRemove(state: BlockState, level: Level, pos: BlockPos, newState: BlockState, byPiston: Boolean) {
+        val blockEntity = level.getBlockEntity(pos) as CargoStorageBlockEntity? ?: return
         blockEntity.dropContent()
-        pLevel.removeBlockEntity(pPos)
+        level.removeBlockEntity(pos)
     }
 }

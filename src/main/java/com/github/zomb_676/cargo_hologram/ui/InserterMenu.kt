@@ -1,25 +1,22 @@
 package com.github.zomb_676.cargo_hologram.ui
 
 import com.github.zomb_676.cargo_hologram.AllRegisters
-import com.github.zomb_676.cargo_hologram.store.blockEntity.CargoStorageBlockEntity
-import com.github.zomb_676.cargo_hologram.store.blockEntity.InserterBlockEntity
+import com.github.zomb_676.cargo_hologram.blockEntity.CargoStorageBlockEntity
+import com.github.zomb_676.cargo_hologram.blockEntity.InserterBlockEntity
 import com.github.zomb_676.cargo_hologram.util.FavouriteItemUtils
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.inventory.AbstractContainerMenu
-import net.minecraft.world.inventory.DataSlot
 import net.minecraft.world.inventory.Slot
 import net.minecraft.world.item.ItemStack
 import net.minecraftforge.items.ItemStackHandler
 import net.minecraftforge.items.SlotItemHandler
 import net.minecraftforge.items.wrapper.PlayerMainInvWrapper
-import javax.swing.TransferHandler
-import kotlin.math.tan
 
 class InserterMenu(containerId: Int, val playerInv: Inventory,val pos: BlockPos) :
-    AbstractContainerMenu(AllRegisters.Menus.INSERTER_MENU.get(), containerId) {
+    AbstractContainerMenu(AllRegisters.Menus.inserterMenu.get(), containerId) {
     override fun quickMoveStack(pPlayer: Player, pIndex: Int): ItemStack {
         val item = this.slots[pIndex].item
         if (item.isEmpty) return ItemStack.EMPTY

@@ -4,7 +4,6 @@ import com.github.zomb_676.cargo_hologram.capability.CapRegisters
 import com.github.zomb_676.cargo_hologram.capability.CargoEnergyItemCapability
 import com.github.zomb_676.cargo_hologram.ui.MonitorScreen
 import com.github.zomb_676.cargo_hologram.util.literal
-import com.github.zomb_676.cargo_hologram.util.log
 import com.github.zomb_676.cargo_hologram.util.open
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.chat.Component
@@ -31,8 +30,8 @@ class CargoMonitor : Item(Properties().stacksTo(1)) {
             stack.getCapability(CapRegisters.CARGO_ENERGY_ITEM).ifPresent { cap ->
                 tips += "energy:${cap.current}/${cap.max}".literal()
             }
-        }catch (e : Throwable) {
-            log { error(e) }
+        } catch (e: Throwable) {
+            println()
         }
     }
 
@@ -50,6 +49,6 @@ class CargoMonitor : Item(Properties().stacksTo(1)) {
 
     override fun initCapabilities(stack: ItemStack, nbt: CompoundTag?): ICapabilityProvider? {
         if (nbt == null) return null
-        return CapRegisters.CargoEnergyItemProvider(CargoEnergyItemCapability(nbt))
+        return CapRegisters.CargoEnergyItemProvider(CargoEnergyItemCapability.of(nbt))
     }
 }

@@ -2,7 +2,6 @@ package com.github.zomb_676.cargo_hologram
 
 import com.github.zomb_676.cargo_hologram.capability.CapRegisters
 import com.github.zomb_676.cargo_hologram.data.CargoHologramDataGenerator
-import com.github.zomb_676.cargo_hologram.favourite.FavouriteItemsEventHandle
 import com.github.zomb_676.cargo_hologram.network.NetworkHandle
 import com.github.zomb_676.cargo_hologram.trace.ClientResultCache
 import com.github.zomb_676.cargo_hologram.trace.QueryCenter
@@ -38,7 +37,8 @@ class CargoHologram {
             MonitorCenter,
             AllCommands,
             CargoHologramDataGenerator,
-            CapRegisters
+            CapRegisters,
+            ConsumeEnergyEventHandle
         ).dispatch()
         runOnDistClient {
             {
@@ -62,11 +62,12 @@ class CargoHologram {
         NetworkHandle.registerPackets()
 
         Dispatcher.enqueueWork<FMLClientSetupEvent> {
-            MenuScreens.register(AllRegisters.Menus.CRAFTER_MANU.get(), ::CraftScreen)
-            MenuScreens.register(AllRegisters.Menus.FILTER_MANU.get(), ::FilterScreen)
-            MenuScreens.register(AllRegisters.Menus.CARGO_STORAGE_MENU.get(), ::CargoStorageScreen)
-            MenuScreens.register(AllRegisters.Menus.INSERTER_MENU.get(), ::InserterScreen)
-            MenuScreens.register(AllRegisters.Menus.PREFER_CONFIGURE_MENU.get(), ::PreferConfigureScreen)
+            MenuScreens.register(AllRegisters.Menus.crafterManu.get(), ::CraftScreen)
+            MenuScreens.register(AllRegisters.Menus.filterManu.get(), ::FilterScreen)
+            MenuScreens.register(AllRegisters.Menus.cargoStorageMenu.get(), ::CargoStorageScreen)
+            MenuScreens.register(AllRegisters.Menus.inserterMenu.get(), ::InserterScreen)
+            MenuScreens.register(AllRegisters.Menus.preferConfigureMenu.get(), ::PreferConfigureScreen)
+            MenuScreens.register(AllRegisters.Menus.cargoChargeTableMenu.get(), ::CargoChargeTableScreen)
         }
 
         Dispatcher<RegisterClientReloadListenersEvent> { event ->

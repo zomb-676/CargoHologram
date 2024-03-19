@@ -1,7 +1,6 @@
 package com.github.zomb_676.cargo_hologram.ui
 
 import com.github.zomb_676.cargo_hologram.AllRegisters
-import com.github.zomb_676.cargo_hologram.util.log
 import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.inventory.AbstractContainerMenu
@@ -13,7 +12,7 @@ import net.minecraftforge.items.ItemStackHandler
 import net.minecraftforge.items.SlotItemHandler
 
 class FilterMenu(containerId: Int, val playerInv: Inventory) :
-    AbstractContainerMenu(AllRegisters.Menus.FILTER_MANU.get(), containerId) {
+    AbstractContainerMenu(AllRegisters.Menus.filterManu.get(), containerId) {
 
     val candidateHandle = ItemStackHandler(1)
     val candidateSlot: Slot = SlotItemHandler(candidateHandle, 0, 8, 8)

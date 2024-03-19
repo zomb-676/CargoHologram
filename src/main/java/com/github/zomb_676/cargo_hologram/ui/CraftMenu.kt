@@ -1,14 +1,15 @@
 package com.github.zomb_676.cargo_hologram.ui
 
 import com.github.zomb_676.cargo_hologram.AllRegisters
-import com.github.zomb_676.cargo_hologram.trace.monitor.MonitorCenter
+import com.github.zomb_676.cargo_hologram.Config
+import com.github.zomb_676.cargo_hologram.capability.CapRegisters
 import com.github.zomb_676.cargo_hologram.trace.QueryCenter
 import com.github.zomb_676.cargo_hologram.trace.request.QueryRequirement
 import com.github.zomb_676.cargo_hologram.trace.request.QuerySource
+import com.github.zomb_676.cargo_hologram.util.OpenBy
 import com.github.zomb_676.cargo_hologram.util.currentRegistryAccess
 import com.github.zomb_676.cargo_hologram.util.currentServer
-import com.github.zomb_676.cargo_hologram.util.near
-import com.github.zomb_676.cargo_hologram.util.toChunkPos
+import com.github.zomb_676.cargo_hologram.util.retrive
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Inventory
@@ -25,8 +26,8 @@ import net.minecraftforge.items.SlotItemHandler
 import org.apache.http.util.Asserts
 import java.util.*
 
-class CraftMenu(containerId: Int, val playerInv: Inventory) :
-    AbstractContainerMenu(AllRegisters.Menus.CRAFTER_MANU.get(), containerId) {
+class CraftMenu(containerId: Int, val playerInv: Inventory, val openBy: OpenBy) :
+    AbstractContainerMenu(AllRegisters.Menus.crafterManu.get(), containerId) {
 
     val materialHandle = ItemStackHandler(9)
     val resultHandle = ItemStackHandler(1)
@@ -42,6 +43,7 @@ class CraftMenu(containerId: Int, val playerInv: Inventory) :
     override fun quickMoveStack(pPlayer: Player, pIndex: Int): ItemStack = ItemStack.EMPTY
 
     init {
+        openBy.onMenuInit(playerInv)
         materialSlots.forEach(this::addSlot)
         this.addSlot(resultSlot)
         createInventorySlots(playerInv)
@@ -110,6 +112,7 @@ class CraftMenu(containerId: Int, val playerInv: Inventory) :
                 if (pCarriedItem.count + result.count > pCarriedItem.maxStackSize) return true
             }
             if (this.requestCraft()) {
+                consumeEnergy(Config.Server.perCrftConsume * result.count / result.maxStackSize)
                 if (pCarriedItem.isEmpty) {
                     carried = result.copy()
                 } else if (pCarriedItem.`is`(result.item)) {
@@ -156,8 +159,8 @@ class CraftMenu(containerId: Int, val playerInv: Inventory) :
             return success
         }
 
-        val success : Boolean = run {
-            querySource.attached().forEach{ (_, entry) ->
+        val success: Boolean = run {
+            querySource.attached().forEach { (_, entry) ->
                 val result = entry.result ?: return@forEach
                 result.forEach { (pos, slots) ->
                     for ((slot, item) in slots) {
@@ -186,6 +189,14 @@ class CraftMenu(containerId: Int, val playerInv: Inventory) :
         }
         if (!success || toSearch.isNotEmpty()) {
             consumed.forEach(player::addItem)
+            val transCount = consumed.sumOf { it.count.toDouble() / it.maxStackSize }
+            consumeEnergy((transCount * Config.Server.perItemTakeConsume).toInt())
+        } else {
+            val transCount = materialSlots.asSequence()
+                .filter { it.hasItem() }
+                .map { it.item }
+                .sumOf { it.count.toDouble() / it.maxStackSize }
+            consumeEnergy((transCount * Config.Server.perItemTakeConsume).toInt())
         }
 
         return success && toSearch.isEmpty()
@@ -203,5 +214,21 @@ class CraftMenu(containerId: Int, val playerInv: Inventory) :
         super.clicked(pSlotId, pButton, pClickType, pPlayer)
     }
 
-    override fun stillValid(pPlayer: Player): Boolean = true
+    override fun stillValid(pPlayer: Player): Boolean {
+        openBy.onItem {
+            return holdAnd {
+                getCapability(CapRegisters.CARGO_ENERGY_ITEM).retrive()?.remainPower() ?: false
+            }
+        }
+        return false
+    }
+
+    private fun consumeEnergy(energy: Int) {
+        openBy.onItem {
+            holdItem().getCapability(CapRegisters.CARGO_ENERGY_ITEM).ifPresent { cap ->
+                cap.current -= energy
+            }
+        }
+    }
+
 }

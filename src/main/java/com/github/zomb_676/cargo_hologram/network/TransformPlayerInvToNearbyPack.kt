@@ -1,6 +1,6 @@
 package com.github.zomb_676.cargo_hologram.network
 
-import com.github.zomb_676.cargo_hologram.store.blockEntity.CargoStorageBlockEntity
+import com.github.zomb_676.cargo_hologram.blockEntity.CargoStorageBlockEntity
 import com.github.zomb_676.cargo_hologram.util.FavouriteItemUtils
 import com.github.zomb_676.cargo_hologram.util.near
 import com.github.zomb_676.cargo_hologram.util.toChunkPos

@@ -49,7 +49,7 @@ class CargoHologramJeiPlugin : IModPlugin {
     override fun registerRecipeTransferHandlers(registration: IRecipeTransferRegistration) {
         registration.addUniversalRecipeTransferHandler(object : IRecipeTransferHandler<CraftMenu, CraftingRecipe> {
             override fun getContainerClass(): Class<out CraftMenu> = CraftMenu::class.java
-            override fun getMenuType(): Optional<MenuType<CraftMenu>> = AllRegisters.Menus.CRAFTER_MANU.get().optional()
+            override fun getMenuType(): Optional<MenuType<CraftMenu>> = AllRegisters.Menus.crafterManu.get().optional()
             override fun getRecipeType(): RecipeType<CraftingRecipe> = RecipeTypes.CRAFTING
 
             override fun transferRecipe(

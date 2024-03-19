@@ -1,12 +1,11 @@
 package com.github.zomb_676.cargo_hologram
 
 import com.github.zomb_676.cargo_hologram.CargoHologram.Companion.MOD_ID
+import com.github.zomb_676.cargo_hologram.blockEntity.CargoChargeTableBlockEntity
+import com.github.zomb_676.cargo_hologram.blockEntity.CargoStorageBlockEntity
+import com.github.zomb_676.cargo_hologram.blockEntity.InserterBlockEntity
+import com.github.zomb_676.cargo_hologram.blockEntity.RemoteCraftTableBlockEntity
 import com.github.zomb_676.cargo_hologram.item.*
-import com.github.zomb_676.cargo_hologram.store.CargoInserter
-import com.github.zomb_676.cargo_hologram.store.CargoStorage
-import com.github.zomb_676.cargo_hologram.store.blockEntity.CargoStorageBlockEntity
-import com.github.zomb_676.cargo_hologram.store.blockEntity.InserterBlockEntity
-import com.github.zomb_676.cargo_hologram.store.blockEntity.RemoteCraftTableBlockEntity
 import com.github.zomb_676.cargo_hologram.ui.*
 import com.github.zomb_676.cargo_hologram.util.*
 import net.minecraft.core.registries.Registries
@@ -45,7 +44,7 @@ object AllRegisters : BusSubscribe {
         Items.monitor
         Blocks.remoteCraftTable
         BlockEntities.cargoStorage
-        Menus.FILTER_MANU
+        Menus.filterManu
     }
 
     val CREATIVE_TAB: RegistryObject<CreativeModeTab> = TAB.register("cargo") {
@@ -53,28 +52,37 @@ object AllRegisters : BusSubscribe {
     }
 
     object Menus {
-        val CRAFTER_MANU: RegistryObject<MenuType<CraftMenu>> = MENU.register("crafter") {
-            MenuType(::CraftMenu, FeatureFlags.DEFAULT_FLAGS)
+        val crafterManu: RegistryObject<MenuType<CraftMenu>> = MENU.register("crafter") {
+            MenuType(object : IContainerFactory<CraftMenu> {
+                override fun create(windowId: Int, inv: Inventory, data: FriendlyByteBuf): CraftMenu =
+                    CraftMenu(windowId, inv, OpenBy.read(data))
+            }, FeatureFlags.DEFAULT_FLAGS)
         }
-        val FILTER_MANU: RegistryObject<MenuType<FilterMenu>> = MENU.register("filter") {
+        val filterManu: RegistryObject<MenuType<FilterMenu>> = MENU.register("filter") {
             MenuType(::FilterMenu, FeatureFlags.DEFAULT_FLAGS)
         }
-        val CARGO_STORAGE_MENU: RegistryObject<MenuType<CargoStorageMenu>> = MENU.register("cargo_storage") {
+        val cargoStorageMenu: RegistryObject<MenuType<CargoStorageMenu>> = MENU.register("cargo_storage") {
             MenuType(object : IContainerFactory<CargoStorageMenu> {
                 override fun create(windowId: Int, inv: Inventory, data: FriendlyByteBuf): CargoStorageMenu =
                     CargoStorageMenu(windowId, inv, data.readBlockPos())
             }, FeatureFlags.DEFAULT_FLAGS)
         }
-        val INSERTER_MENU: RegistryObject<MenuType<InserterMenu>> = MENU.register("inserter") {
+        val inserterMenu: RegistryObject<MenuType<InserterMenu>> = MENU.register("inserter") {
             MenuType(object : IContainerFactory<InserterMenu> {
                 override fun create(windowId: Int, inv: Inventory, data: FriendlyByteBuf): InserterMenu =
                     InserterMenu(windowId, inv, data.readBlockPos())
             }, FeatureFlags.DEFAULT_FLAGS)
         }
-        val PREFER_CONFIGURE_MENU: RegistryObject<MenuType<PreferConfigureMenu>> = MENU.register("prefer_configure") {
+        val preferConfigureMenu: RegistryObject<MenuType<PreferConfigureMenu>> = MENU.register("prefer_configure") {
             MenuType(object : IContainerFactory<PreferConfigureMenu> {
                 override fun create(windowId: Int, inv: Inventory, data: FriendlyByteBuf): PreferConfigureMenu =
                     PreferConfigureMenu(windowId, inv, OpenBy.read(data))
+            }, FeatureFlags.DEFAULT_FLAGS)
+        }
+        val cargoChargeTableMenu: RegistryObject<MenuType<CargoChargeTableMenu>> = MENU.register("cargo_charge_table") {
+            MenuType(object : IContainerFactory<CargoChargeTableMenu> {
+                override fun create(windowId: Int, inv: Inventory, data: FriendlyByteBuf): CargoChargeTableMenu =
+                    CargoChargeTableMenu(windowId, inv, OpenBy.read(data))
             }, FeatureFlags.DEFAULT_FLAGS)
         }
     }
@@ -85,6 +93,8 @@ object AllRegisters : BusSubscribe {
             BLOCK.register("remote_craft_table") { RemoteCraftTable() }
         val cargoStorage: RegistryObject<CargoStorage> = BLOCK.register("cargo_storage") { CargoStorage() }
         val cargoInserter: RegistryObject<CargoInserter> = BLOCK.register("cargo_inserter") { CargoInserter() }
+        val cargoChargeTable: RegistryObject<CargoChargeTable> =
+            BLOCK.register("cargo_charge_table") { CargoChargeTable() }
     }
 
     object Items {
@@ -106,19 +116,28 @@ object AllRegisters : BusSubscribe {
             BlockItem(Blocks.cargoInserter.get(), Item.Properties())
         }
         val linker: RegistryObject<LinkerItem> = ITEM.register("linker") { LinkerItem() }
+        val cargoChargeTable: RegistryObject<BlockItem> = ITEM.register("cargo_charge_table") {
+            BlockItem(Blocks.cargoChargeTable.get(), Item.Properties().stacksTo(1))
+        }
     }
 
     @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
     object BlockEntities {
-        val cargoStorage = BLOCK_ENTITY.register("cargo_storage") {
-            BlockEntityType.Builder.of(::CargoStorageBlockEntity, Blocks.cargoStorage.get()).build(null)
-        }
-        val inserter = BLOCK_ENTITY.register("cargo_inserter") {
+        val cargoStorage: RegistryObject<BlockEntityType<CargoStorageBlockEntity>> =
+            BLOCK_ENTITY.register("cargo_storage") {
+                BlockEntityType.Builder.of(::CargoStorageBlockEntity, Blocks.cargoStorage.get()).build(null)
+            }
+        val inserter: RegistryObject<BlockEntityType<InserterBlockEntity>> = BLOCK_ENTITY.register("cargo_inserter") {
             BlockEntityType.Builder.of(::InserterBlockEntity, Blocks.cargoInserter.get()).build(null)
         }
-        val remoteCraftTable = BLOCK_ENTITY.register("remote_table") {
-            BlockEntityType.Builder.of(::RemoteCraftTableBlockEntity, Blocks.remoteCraftTable.get()).build(null)
-        }
+        val remoteCraftTable: RegistryObject<BlockEntityType<RemoteCraftTableBlockEntity>> =
+            BLOCK_ENTITY.register("remote_table") {
+                BlockEntityType.Builder.of(::RemoteCraftTableBlockEntity, Blocks.remoteCraftTable.get()).build(null)
+            }
+        val cargoChargeTable: RegistryObject<BlockEntityType<CargoChargeTableBlockEntity>> =
+            BLOCK_ENTITY.register("cargo_charge_table") {
+                BlockEntityType.Builder.of(::CargoChargeTableBlockEntity, Blocks.cargoChargeTable.get()).build(null)
+            }
     }
 
 }

@@ -2,7 +2,7 @@ package com.github.zomb_676.cargo_hologram.ui
 
 import com.github.zomb_676.cargo_hologram.AllRegisters
 import com.github.zomb_676.cargo_hologram.network.SetPriorityPack
-import com.github.zomb_676.cargo_hologram.store.blockEntity.CargoStorageBlockEntity
+import com.github.zomb_676.cargo_hologram.blockEntity.CargoStorageBlockEntity
 import net.minecraft.core.BlockPos
 import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.entity.player.Player
@@ -16,7 +16,7 @@ import net.minecraftforge.items.SlotItemHandler
 import net.minecraftforge.items.wrapper.PlayerMainInvWrapper
 
 class CargoStorageMenu(containerId: Int, val playerInv: Inventory, pos: BlockPos) :
-    AbstractContainerMenu(AllRegisters.Menus.CARGO_STORAGE_MENU.get(), containerId) {
+    AbstractContainerMenu(AllRegisters.Menus.cargoStorageMenu.get(), containerId) {
     override fun quickMoveStack(pPlayer: Player, pIndex: Int): ItemStack {
         val item = this.slots[pIndex].item
         if (item.isEmpty) return ItemStack.EMPTY

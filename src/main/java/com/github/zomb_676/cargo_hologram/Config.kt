@@ -1,6 +1,5 @@
 package com.github.zomb_676.cargo_hologram
 
-import com.github.zomb_676.cargo_hologram.favourite.FavouriteItemsEventHandle
 import com.github.zomb_676.cargo_hologram.selector.Selector
 import com.github.zomb_676.cargo_hologram.trace.GlobalFilter
 import com.github.zomb_676.cargo_hologram.ui.CargoBlurScreen
@@ -59,40 +58,39 @@ data object Config : BusSubscribe {
             BUILDER.define("give_ui_stick_and_message_first_login", true)
 
         private val MONITOR_MAX_DAMAGE = BUILDER.push("consume")
-            .define("monitor_max_damage", 10000)
+            .defineInRange("monitor_max_damage", 10000, 1, Int.MAX_VALUE)
 
         private val CRAFTER_MAX_DAMAGE = BUILDER
-            .define("crafter_max_damage", 100000)
+            .defineInRange("crafter_max_damage", 100000, 1, Int.MAX_VALUE)
 
         private val PER_OPEN_CONSUME = BUILDER
-            .define("per_open_consume", 10)
+            .defineInRange("per_open_consume", 10, 0, Int.MAX_VALUE)
 
         private val PER_TICK_OPEN_CONSUME = BUILDER
-            .define("per_tick_open_consume", 0)
+            .defineInRange("per_tick_open_consume", 0, 0, Int.MAX_VALUE)
 
         private val PER_ITEM_TAKE_CONSUME = BUILDER
             .comment("count like bundle, un-stackable item is regarded as 64 normal stack items")
-            .define("per_item_take_consume", 5)
+            .defineInRange("per_item_take_consume", 5, 0, Int.MAX_VALUE)
 
         private val PER_CRAFT_CONSUME = BUILDER
             .comment("count like bundle, un-stackable item is regarded as 64 normal stack items")
-            .define("per_item_craft_consume", 10)
+            .defineInRange("per_item_craft_consume", 10, 0, Int.MAX_VALUE)
 
         private val ITEM_POWER_VALUE = BUILDER
+            .pop().push("charge")
             .comment("1", "")
             .defineList("item_power_value", listOf("1")) { true }
 
-        private val FULE_POWE_BY_BURN_TIME = BUILDER
+        private val FUEL_POWER_BY_BURN_TIME = BUILDER
             .comment("burn tick(count in tick) * ration, for ration with zero, will disable")
-            .define("fuel_power_by_burn_time", "5.0")
+            .defineInRange("fuel_power_by_burn_time", 5, 0, Int.MAX_VALUE)
 
-        private val RF_POWER_RATE = BUILDER.push("energy_power")
-            .define("rf_power_rate", 2.0)
+        private val POWER_CHARGE_RATE = BUILDER.push("forge_energy_power_rate")
+            .comment("measure in tick, -1 for un-limit")
+            .defineInRange("power_charge_rate", 200, 0 ,Int.MAX_VALUE)
 
-        private val FORGE_ENERGY_POWER_RATE = BUILDER.push("forge_energy_power_rate")
-            .define("forge_energy_power_rate", 1.0)
-
-        private val next = BUILDER.pop().pop()
+        private val next = BUILDER.pop()
 
 
         private val SPEC: ForgeConfigSpec = BUILDER.build()
@@ -118,6 +116,24 @@ data object Config : BusSubscribe {
             private set
         var giveUIStickAndMessageFirstLogin = true
             private set
+        var monitorMaxDamage = 10000
+            private set
+        var crafterMaxDamage = 100000
+            private set
+        var perOpenConsume = 10
+            private set
+        var perTickOpenConsume = 0
+            private set
+        var perItemTakeConsume = 5
+            private set
+        var perCrftConsume = 10
+            private set
+        var itemPowerValue = listOf("1")
+            private set
+        var fulePowerByBurnTime = 5
+            private set
+        var powerChargeRate = 200
+            private set
 
         private fun onLoad(event: ModConfigEvent) {
             if (event.config.type != ModConfig.Type.SERVER) return
@@ -139,6 +155,16 @@ data object Config : BusSubscribe {
             GlobalFilter.setAllowLootChest(ALLOW_LOOT_CHEST.get())
 
             giveUIStickAndMessageFirstLogin = GIVE_UI_STICK_AND_MESSAGE_FIRST_LOGIN.get()
+
+            monitorMaxDamage = MONITOR_MAX_DAMAGE.get()
+            crafterMaxDamage = CRAFTER_MAX_DAMAGE.get()
+            perOpenConsume = PER_OPEN_CONSUME.get()
+            perTickOpenConsume = PER_TICK_OPEN_CONSUME.get()
+            perItemTakeConsume = PER_ITEM_TAKE_CONSUME.get()
+            perCrftConsume = PER_CRAFT_CONSUME.get()
+            itemPowerValue = ITEM_POWER_VALUE.get()
+            fulePowerByBurnTime = FUEL_POWER_BY_BURN_TIME.get()
+            powerChargeRate = POWER_CHARGE_RATE.get().let { if (it < 0) Int.MAX_VALUE else it }
         }
     }
 

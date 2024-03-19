@@ -1,6 +1,5 @@
-package com.github.zomb_676.cargo_hologram.favourite
+package com.github.zomb_676.cargo_hologram
 
-import com.github.zomb_676.cargo_hologram.CargoHologramSpriteUploader
 import com.github.zomb_676.cargo_hologram.network.SetFavouritePack
 import com.github.zomb_676.cargo_hologram.network.TransformPlayerInvToNearbyPack
 import com.github.zomb_676.cargo_hologram.ui.UIConstant

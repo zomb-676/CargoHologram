@@ -136,21 +136,27 @@ repositories {
         name = "curse maven"
         url = "https://cursemaven.com"
         content {
-            includeGroup "curse.maven"
+            includeGroup("curse.maven")
         }
     }
     maven {
-        name 'IzzelAliz Maven'
-        url 'https://maven.izzel.io/releases/'
+        name = 'IzzelAliz Maven'
+        url = 'https://maven.izzel.io/releases/'
         content {
-            includeGroup "icyllis.modernui"
+            includeGroup("icyllis.modernui")
         }
     }
     maven {
         name "top"
         url "https://maven.k-4u.nl"
         content {
-            includeGroup "mcjty.theoneprobe"
+            includeGroup("mcjty.theoneprobe")
+        }
+    }
+    maven {
+        url 'https://maven.rover656.dev/releases'
+        content {
+            includeGroup("com.enderio")
         }
     }
 }
@@ -225,6 +231,8 @@ dependencies {
     }
     implementation fg.deobf("icyllis.modernui:ModernUI-Forge:${minecraft_version}-${modernui_version}.+")
 
+    def enderIOVersion = "1.20.1-6.0.16-alpha"
+    runtimeOnly fg.deobf("com.enderio:EnderIO:$enderIOVersion")
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

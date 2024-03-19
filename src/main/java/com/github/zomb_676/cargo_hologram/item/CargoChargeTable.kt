@@ -1,8 +1,8 @@
-package com.github.zomb_676.cargo_hologram.store
+package com.github.zomb_676.cargo_hologram.item
 
-import com.github.zomb_676.cargo_hologram.AllRegisters
-import com.github.zomb_676.cargo_hologram.store.blockEntity.InserterBlockEntity
-import com.github.zomb_676.cargo_hologram.ui.InserterMenu
+import com.github.zomb_676.cargo_hologram.blockEntity.CargoChargeTableBlockEntity
+import com.github.zomb_676.cargo_hologram.ui.CargoChargeTableMenu
+import com.github.zomb_676.cargo_hologram.util.OpenBy
 import com.github.zomb_676.cargo_hologram.util.literal
 import net.minecraft.core.BlockPos
 import net.minecraft.network.chat.Component
@@ -20,33 +20,31 @@ import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.phys.BlockHitResult
 import net.minecraftforge.network.NetworkHooks
 
-class CargoInserter : Block(Properties.of().noOcclusion()), EntityBlock {
-    override fun newBlockEntity(pPos: BlockPos, pState: BlockState): InserterBlockEntity =
-        InserterBlockEntity(pPos, pState)
+class CargoChargeTable : Block(Properties.of()), EntityBlock {
+    override fun newBlockEntity(pPos: BlockPos, pState: BlockState): CargoChargeTableBlockEntity =
+        CargoChargeTableBlockEntity(pPos, pState)
 
     @Suppress("OVERRIDE_DEPRECATION")
     override fun use(
-        state: BlockState, level: Level, pos: BlockPos, player: Player,
-        hand: InteractionHand, hit: BlockHitResult,
+        state: BlockState,
+        level: Level,
+        pos: BlockPos,
+        player: Player,
+        hand: InteractionHand,
+        hit: BlockHitResult,
     ): InteractionResult {
-        val item = player.getItemInHand(hand)
-        if (item.`is`(AllRegisters.Items.linker.get())) {
-            val entity = level.getBlockEntity(pos) as InserterBlockEntity? ?: return InteractionResult.PASS
-            entity.setLinked(item)
-            return InteractionResult.SUCCESS
-        }
-
         if (level.isClientSide) return InteractionResult.SUCCESS
+        val openBy = OpenBy.byBlock(pos, state, level.dimension())
         NetworkHooks.openScreen(player as ServerPlayer, object : MenuProvider {
             override fun createMenu(
                 pContainerId: Int,
                 pPlayerInventory: Inventory,
                 pPlayer: Player,
             ): AbstractContainerMenu =
-                InserterMenu(pContainerId, pPlayerInventory, pos)
+                CargoChargeTableMenu(pContainerId, pPlayerInventory, openBy)
 
             override fun getDisplayName(): Component = "".literal()
-        }, pos)
+        }, openBy::write)
         return InteractionResult.CONSUME
     }
 }

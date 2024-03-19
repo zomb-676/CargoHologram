@@ -1,6 +1,6 @@
 package com.github.zomb_676.cargo_hologram.network
 
-import com.github.zomb_676.cargo_hologram.store.blockEntity.RemoteCraftTableBlockEntity
+import com.github.zomb_676.cargo_hologram.blockEntity.RemoteCraftTableBlockEntity
 import com.github.zomb_676.cargo_hologram.util.dim
 import net.minecraft.core.BlockPos
 import net.minecraft.core.registries.Registries
